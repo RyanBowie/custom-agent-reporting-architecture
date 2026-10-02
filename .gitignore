@@ -1,0 +1,12 @@
+# Keep report files and build output out of this documentation-only repository
+*.pbix
+*.pbit
+*.zip
+
+# Local and editor files
+.env
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

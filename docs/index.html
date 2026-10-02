@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("scoutTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<script>
+  (() => {
+    const root = document.documentElement;
+    root.classList.add("js");
+    if (new URLSearchParams(window.location.search).get("scoutTheme")) return;
+    try {
+      const saved = localStorage.getItem("car-theme");
+      if (saved === "light" || saved === "dark") root.setAttribute("data-theme", saved);
+    } catch (e) { /* storage unavailable */ }
+  })();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Custom Agent Reporting – Architecture · Reference design for tenant-wide agent reporting</title>
+<meta name="description" content="Community reference architecture showing how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. Documentation and screenshots only; not a replacement for Microsoft Agent 365.">
+<meta property="og:title" content="Custom Agent Reporting – Architecture">
+<meta property="og:description" content="Community reference architecture showing how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. Documentation and screenshots only; not a replacement for Microsoft Agent 365.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:,">
+<style>
+:root {
+  color-scheme: light;
+  --cp-bg: #f7f4ef;
+  --cp-bg-elevated: #fcfbf8;
+  --cp-surface: #ffffff;
+  --cp-surface-soft: #f5f5f5;
+  --cp-border: #dedede;
+  --cp-border-strong: #919191;
+  --cp-text: #242424;
+  --cp-text-muted: #5c5c5c;
+  --cp-text-soft: #6f6f6f;
+  --cp-accent: #b11f4b;
+  --cp-accent-hover: #9a1a41;
+  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-accent-fg: #ffffff;
+  --cp-success: #16a34a;
+  --cp-danger: #dc2626;
+  --cp-warning: #f59e0b;
+  --cp-link: #0078d4;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  --cp-overlay: rgba(255, 255, 255, 0.8);
+  --cp-panel: rgba(255, 255, 255, 0.86);
+  --cp-panel-strong: rgba(255, 255, 255, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.55);
+  --cp-highlight: rgba(177, 31, 75, 0.12);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --cp-bg: #3d3b3a;
+  --cp-bg-elevated: #343231;
+  --cp-surface: #292929;
+  --cp-surface-soft: #2e2e2e;
+  --cp-border: #474747;
+  --cp-border-strong: #5f5f5f;
+  --cp-text: #dedede;
+  --cp-text-muted: #919191;
+  --cp-text-soft: #b0b0b0;
+  --cp-accent: #fd8ea1;
+  --cp-accent-hover: #fb7b91;
+  --cp-accent-soft: rgba(253, 142, 161, 0.14);
+  --cp-accent-fg: #1a1a1a;
+  --cp-success: #4ade80;
+  --cp-danger: #f87171;
+  --cp-warning: #fbbf24;
+  --cp-link: #4da6ff;
+  --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+  --cp-overlay: rgba(41, 41, 41, 0.88);
+  --cp-panel: rgba(41, 41, 41, 0.72);
+  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-sheen: rgba(255, 255, 255, 0.04);
+  --cp-highlight: rgba(253, 142, 161, 0.12);
+}
+
+:root {
+  --header-h: 3.5rem;
+  --chips-h: 3rem;
+  --radius: 0.625rem;
+  --radius-card: 16px;
+  --card-shadow: 0 0 2px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.14);
+  --font: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: Consolas, "Courier New", Courier, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+body { margin: 0; background: var(--cp-bg); color: var(--cp-text); font-family: var(--font); font-size: 1rem; line-height: 1.6; }
+a { color: var(--cp-link); text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+[id] { scroll-margin-top: calc(var(--header-h) + var(--chips-h) + 12px); }
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 12px; color: var(--cp-text); }
+h1 { font-size: clamp(1.9rem, 4vw, 2.75rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.15rem; margin-top: 24px; }
+h4 { font-size: 1rem; margin-top: 16px; }
+p { margin: 0 0 12px; }
+ul, ol { margin: 0 0 12px; padding-left: 24px; }
+li + li { margin-top: 4px; }
+strong { font-weight: 650; }
+code, kbd, pre { font-family: var(--mono); font-size: 0.9em; }
+code { background: var(--cp-surface-soft); border: 1px solid var(--cp-border); border-radius: 4px; padding: 0 4px; overflow-wrap: anywhere; }
+pre { background: var(--cp-surface-soft); border: 1px solid var(--cp-border); border-radius: var(--radius); padding: 12px 16px; overflow-x: auto; }
+pre code { background: none; border: 0; padding: 0; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip-link { position: absolute; left: 16px; top: -120px; z-index: 100; background: var(--cp-accent); color: var(--cp-accent-fg); padding: 8px 16px; border-radius: var(--radius); font-weight: 600; text-decoration: none; }
+.skip-link:focus { top: 8px; }
+html.js .no-js-only { display: none; }
+.muted { color: var(--cp-text-muted); }
+.small { font-size: 0.875rem; }
+
+/* Header */
+.site-header { position: sticky; top: 0; z-index: 50; height: var(--header-h); background: var(--cp-panel-strong); border-bottom: 1px solid var(--cp-border); }
+.site-header .inner { max-width: 1240px; height: 100%; margin: 0 auto; padding: 0 20px; display: flex; align-items: center; gap: 12px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--cp-text); text-decoration: none; font-weight: 700; min-width: 0; }
+.brand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand-mark { width: 28px; height: 28px; flex: none; }
+.bm-bg { fill: var(--cp-accent); }
+.bm-fg { fill: none; stroke: var(--cp-accent-fg); stroke-width: 2; stroke-linecap: round; }
+.version-tag { font-family: var(--mono); font-size: 0.75rem; color: var(--cp-text-muted); border: 1px solid var(--cp-border); border-radius: 999px; padding: 0 8px; white-space: nowrap; }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.header-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--cp-border); border-radius: var(--radius); background: var(--cp-surface); color: var(--cp-text); text-decoration: none; font-size: 0.9rem; white-space: nowrap; }
+.header-link:hover { border-color: var(--cp-border-strong); }
+.header-link svg, .icon-btn svg { width: 18px; height: 18px; flex: none; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 1px solid var(--cp-border); border-radius: var(--radius); background: var(--cp-surface); color: var(--cp-text); cursor: pointer; padding: 0; }
+.icon-btn:hover { border-color: var(--cp-border-strong); }
+.theme-toggle .icon-sun { display: none; }
+html[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+@media (max-width: 560px) { .version-tag, .header-link .label { display: none; } }
+
+/* Navigation */
+.chips { position: sticky; top: var(--header-h); z-index: 40; background: var(--cp-panel-strong); border-bottom: 1px solid var(--cp-border); overflow-x: auto; scrollbar-width: thin; }
+.chips ul { display: flex; gap: 8px; list-style: none; margin: 0; padding: 8px 20px; width: max-content; }
+.chips li + li { margin-top: 0; }
+.chips a { display: inline-block; padding: 4px 12px; border: 1px solid var(--cp-border); border-radius: 999px; background: var(--cp-surface); color: var(--cp-text); text-decoration: none; font-size: 0.85rem; white-space: nowrap; }
+.chips a[aria-current="true"] { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); }
+.layout { max-width: 1240px; margin: 0 auto; padding: 0 20px 64px; }
+.toc { display: none; }
+.toc-title { margin: 0 0 8px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cp-text-muted); }
+.toc ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--cp-border); }
+.toc li + li { margin-top: 0; }
+.toc a { display: block; margin-left: -1px; padding: 4px 12px; border-left: 2px solid transparent; color: var(--cp-text-muted); text-decoration: none; font-size: 0.9rem; line-height: 1.4; }
+.toc a:hover { color: var(--cp-text); }
+.toc a[aria-current="true"] { color: var(--cp-accent); border-left-color: var(--cp-accent); background: var(--cp-accent-soft); font-weight: 600; }
+main { min-width: 0; }
+@media (min-width: 1100px) {
+  :root { --chips-h: 0px; }
+  .chips { display: none; }
+  .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; }
+  .toc { display: block; position: sticky; top: calc(var(--header-h) + 24px); align-self: start; max-height: calc(100vh - var(--header-h) - 48px); overflow-y: auto; margin-top: 40px; }
+}
+
+/* Sections and hero */
+.section { padding-top: 56px; }
+.section > p, .section > ul, .section > ol:not(.steps):not(.stepper) { max-width: 80ch; }
+.section-kicker { margin: 0 0 4px; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cp-accent); }
+.hero { padding-top: 40px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 4px 12px; border: 1px solid var(--cp-highlight); border-radius: 999px; background: var(--cp-accent-soft); color: var(--cp-accent); font-size: 0.85rem; font-weight: 600; }
+.lede { max-width: 66ch; font-size: 1.15rem; color: var(--cp-text-muted); }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0 24px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: 1px solid var(--cp-border-strong); border-radius: var(--radius); background: var(--cp-surface); color: var(--cp-text); font: inherit; font-weight: 600; line-height: 1.4; text-decoration: none; cursor: pointer; }
+.btn:hover { border-color: var(--cp-text); }
+.btn-primary { background: var(--cp-accent); border-color: var(--cp-accent); color: var(--cp-accent-fg); }
+.btn-primary:hover { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); }
+.btn-sm { padding: 4px 12px; font-size: 0.85rem; }
+.btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; }
+.facts li { margin: 0; padding: 12px 16px; border: 1px solid var(--cp-border); border-radius: var(--radius); background: var(--cp-surface); box-shadow: var(--card-shadow); }
+.facts strong { display: block; }
+.facts span { color: var(--cp-text-muted); font-size: 0.85rem; }
+
+/* Cards, callouts, badges */
+.card { margin: 16px 0; padding: 20px 24px; border: 1px solid var(--cp-border); border-radius: var(--radius-card); background: var(--cp-surface); box-shadow: var(--card-shadow); }
+.card > :last-child, .callout > :last-child { margin-bottom: 0; }
+.card h3:first-child, .card h4:first-child { margin-top: 0; }
+.grid-2, .grid-3 { display: grid; gap: 16px; margin: 16px 0; }
+.grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-2 > .card, .grid-3 > .card { margin: 0; }
+@media (max-width: 900px) { .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px) { .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); } }
+.callout { margin: 16px 0; padding: 16px 20px; border: 1px solid var(--cp-border); border-left: 4px solid var(--cp-border-strong); border-radius: var(--radius); background: var(--cp-surface); }
+.callout-title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 700; }
+.callout-title svg { width: 18px; height: 18px; flex: none; }
+.callout-danger { border-left-color: var(--cp-danger); background: var(--cp-surface-soft); background: color-mix(in srgb, var(--cp-danger) 8%, var(--cp-surface)); }
+.callout-danger .callout-title { color: var(--cp-danger); }
+.callout-warning { border-left-color: var(--cp-warning); background: var(--cp-surface-soft); background: color-mix(in srgb, var(--cp-warning) 10%, var(--cp-surface)); }
+.callout-warning .callout-title svg { color: var(--cp-warning); }
+.callout-info { border-left-color: var(--cp-link); background: var(--cp-surface-soft); background: color-mix(in srgb, var(--cp-link) 7%, var(--cp-surface)); }
+.callout-info .callout-title svg { color: var(--cp-link); }
+.callout-accent { border-left-color: var(--cp-accent); background: var(--cp-accent-soft); }
+.badge { display: inline-block; padding: 0 8px; border: 1px solid var(--cp-border-strong); border-radius: 999px; background: var(--cp-surface-soft); color: var(--cp-text); font-size: 0.75rem; font-weight: 600; line-height: 1.6; white-space: nowrap; vertical-align: middle; }
+.badge-success { border-color: var(--cp-success); background: color-mix(in srgb, var(--cp-success) 14%, var(--cp-surface)); }
+.badge-warning { border-color: var(--cp-warning); background: color-mix(in srgb, var(--cp-warning) 16%, var(--cp-surface)); }
+.badge-danger { border-color: var(--cp-danger); background: color-mix(in srgb, var(--cp-danger) 12%, var(--cp-surface)); }
+.badge-accent { border-color: var(--cp-accent); background: var(--cp-accent-soft); }
+
+/* Tables and details */
+.table-wrap { margin: 16px 0; overflow-x: auto; border: 1px solid var(--cp-border); border-radius: var(--radius); background: var(--cp-surface); }
+table { width: 100%; border-collapse: collapse; font-size: 0.925rem; }
+caption { padding: 8px 12px; text-align: left; font-weight: 600; color: var(--cp-text-muted); }
+th, td { padding: 8px 12px; border-bottom: 1px solid var(--cp-border); text-align: left; vertical-align: top; }
+thead th { background: var(--cp-surface-soft); font-weight: 600; white-space: nowrap; }
+tbody th { font-weight: 600; }
+tbody tr:last-child > * { border-bottom: 0; }
+tr.is-relevant > * { background: var(--cp-highlight); }
+.nowrap { white-space: nowrap; }
+table.wrap-head thead th { white-space: normal; }
+/* Narrow screens: the script labels each cell and adds .stack, so each row becomes a card */
+@media (max-width: 640px) {
+  table.stack, table.stack tbody, table.stack tr, table.stack th, table.stack td { display: block; }
+  table.stack thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  table.stack tbody tr { padding: 12px 16px; border-bottom: 1px solid var(--cp-border); }
+  table.stack tbody tr:last-child { border-bottom: 0; }
+  table.stack tbody tr > * { padding: 4px 0; border-bottom: 0; overflow-wrap: break-word; }
+  table.stack tbody tr > :first-child { padding-top: 0; font-weight: 600; }
+  table.stack td[data-label]::before { content: attr(data-label); content: attr(data-label) / ""; display: block; color: var(--cp-text-muted); font-size: 0.8rem; font-weight: 600; }
+  table.stack td:empty { display: none; }
+  table.stack tr.is-relevant { background: var(--cp-highlight); }
+  table.stack tr.is-relevant > * { background: transparent; }
+}
+details { margin: 12px 0; border: 1px solid var(--cp-border); border-radius: var(--radius); background: var(--cp-surface); }
+details > summary { padding: 12px 16px; font-weight: 600; cursor: pointer; }
+details[open] > summary { border-bottom: 1px solid var(--cp-border); }
+.details-body { padding: 12px 16px; }
+.details-body > :last-child { margin-bottom: 0; }
+.details-body .table-wrap { margin: 0 0 12px; }
+/* Copy boxes */
+.code-box { display: flex; align-items: flex-start; gap: 8px; margin: 8px 0 12px; padding: 8px 8px 8px 12px; border: 1px solid var(--cp-border); border-radius: var(--radius); background: var(--cp-surface-soft); }
+.code-box code { flex: 1; min-width: 0; padding: 4px 0; border: 0; background: none; white-space: pre-wrap; overflow-wrap: anywhere; }
+.copy-btn { flex: none; }
+
+/* Diagram */
+.diagram-wrap { margin: 16px 0; padding: 12px; overflow-x: auto; border: 1px solid var(--cp-border); border-radius: var(--radius-card); background: var(--cp-surface); }
+.diagram-wrap svg { display: block; width: 100%; min-width: 820px; height: auto; }
+.d-band { fill: var(--cp-bg-elevated); stroke: var(--cp-border); }
+.d-band-title { font: 700 12px var(--font); fill: var(--cp-accent); letter-spacing: 0.06em; }
+.d-box { fill: var(--cp-surface); stroke: var(--cp-border-strong); stroke-width: 1.25; }
+.d-title { font: 700 13px var(--font); fill: var(--cp-text); }
+.d-text { font: 12px var(--font); fill: var(--cp-text-muted); }
+.d-label { font: 600 11px var(--font); fill: var(--cp-text-muted); }
+.d-mono { font-family: var(--mono); }
+.d-arrow { fill: none; stroke: var(--cp-text-muted); stroke-width: 1.5; }
+.d-arrowhead { fill: var(--cp-text-muted); }
+.d-loop { fill: none; stroke: var(--cp-accent); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.d-loop-label { font: 600 12px var(--font); fill: var(--cp-accent); }
+.d-ok { fill: var(--cp-surface); stroke: var(--cp-success); stroke-width: 2; }
+.d-bad { fill: var(--cp-surface); stroke: var(--cp-danger); stroke-width: 2; }
+.d-store { fill: var(--cp-accent-soft); stroke: var(--cp-accent); }
+.d-store-text { font: 600 12px var(--font); fill: var(--cp-text); }
+
+/* Steps */
+.steps, .stepper { list-style: none; margin: 16px 0; padding: 0; counter-reset: step; }
+.steps > li, .stepper > li { position: relative; margin: 0; padding: 0 0 20px 48px; counter-increment: step; }
+.steps > li::before, .stepper > li::before { content: counter(step); position: absolute; left: 0; top: 0; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--cp-accent); border-radius: 50%; background: var(--cp-accent-soft); color: var(--cp-accent); font-size: 0.9rem; font-weight: 700; }
+.steps > li::after, .stepper > li::after { content: ""; position: absolute; left: 15px; top: 38px; bottom: 6px; width: 2px; background: var(--cp-border); }
+.steps > li:last-child::after, .stepper > li:last-child::after { display: none; }
+.step-title { display: block; margin-bottom: 4px; font-weight: 700; }
+.stepper > li > .card { margin: 0; }
+.stepper > li.is-done::before { content: "\2713"; border-color: var(--cp-success); background: var(--cp-success); color: var(--cp-accent-fg); }
+.step-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 8px; }
+.step-head h3 { margin: 0; }
+.step-done { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--cp-text-muted); cursor: pointer; }
+
+.link-list { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 12px 0; padding: 0; list-style: none; }
+.link-list li + li { margin-top: 0; }
+
+/* Footer */
+.site-footer { margin-top: 32px; padding: 32px 20px; border-top: 1px solid var(--cp-border); background: var(--cp-bg-elevated); color: var(--cp-text-muted); font-size: 0.875rem; }
+.site-footer .inner { max-width: 1240px; margin: 0 auto; }
+.site-footer p { max-width: 90ch; }
+
+/* Gallery */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 16px; margin: 16px 0; }
+figure.shot { margin: 0; border: 1px solid var(--cp-border); border-radius: var(--radius-card); box-shadow: var(--card-shadow); overflow: hidden; background: var(--cp-surface); }
+.shot-btn { display: block; cursor: zoom-in; }
+.shot-btn img { display: block; width: 100%; height: auto; }
+.shot figcaption { padding: 12px 16px; font-size: .9rem; }
+.shot figcaption small { display: block; color: var(--cp-text-muted); }
+dialog.lightbox { box-sizing: border-box; width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 16px; border: 0; background: var(--cp-bg); color: var(--cp-text); }
+.lightbox-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; height: 100%; }
+.lightbox img { max-width: 100%; max-height: calc(100vh - 120px); object-fit: contain; }
+.lightbox-close { align-self: flex-end; }
+dialog.lightbox::backdrop { background: rgba(0, 0, 0, .6); }
+
+@media print {
+  .site-header, .chips, .toc, .skip-link, .cta-row, .copy-btn, [data-jsonly], .no-print { display: none !important; }
+  .lightbox { display: none !important; }
+  body { background: var(--cp-surface); }
+  .layout { display: block; max-width: none; padding: 0; }
+  .section { padding-top: 24px; }
+  .card, .facts li, .shot { box-shadow: none; }
+  .card, .callout, .steps > li, tr, details, .diagram-wrap, .shot { break-inside: avoid; }
+  .diagram-wrap svg { min-width: 0; }
+  .table-wrap { overflow: visible; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="inner">
+    <a class="brand" href="#top">
+      <svg class="brand-mark" viewBox="0 0 28 28" aria-hidden="true"><rect class="bm-bg" width="28" height="28" rx="7"/><path class="bm-fg" d="M8 20v-6M14 20V8M20 20v-9"/></svg>
+      <span>Custom Agent Reporting</span>
+    </a>
+    <span class="version-tag">Architecture</span>
+    <div class="header-actions">
+      <a class="header-link" href="https://github.com/RyanBowie/custom-agent-reporting-architecture#readme" aria-label="View the repository on GitHub">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"/></svg><span class="label">GitHub</span>
+      </a>
+      <button type="button" class="icon-btn theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" data-jsonly hidden>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<nav class="chips" id="chips" aria-label="Sections">
+  <ul>
+    <li><a href="#top">Overview</a></li>
+    <li><a href="#not-a-replacement">Not Agent 365</a></li>
+    <li><a href="#screenshots">Screenshots</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#lanes">Lanes</a></li>
+    <li><a href="#cil">Interactions</a></li>
+    <li><a href="#collectors">Collectors</a></li>
+    <li><a href="#refresh">Refresh</a></li>
+    <li><a href="#model">Model</a></li>
+    <li><a href="#origin-risk">Risk</a></li>
+    <li><a href="#coverage">Coverage</a></li>
+    <li><a href="#findings">Findings</a></li>
+    <li><a href="#shadow-ai">Shadow AI</a></li>
+    <li><a href="#permissions">Permissions</a></li>
+    <li><a href="#limitations">Limits</a></li>
+    <li><a href="#related">Related</a></li>
+  </ul>
+</nav>
+
+<div class="layout">
+  <nav class="toc" aria-label="On this page">
+    <p class="toc-title">On this page</p>
+    <ol>
+      <li><a href="#top">Overview</a></li>
+      <li><a href="#not-a-replacement">Not a replacement for Agent 365</a></li>
+      <li><a href="#screenshots">Screenshots</a></li>
+      <li><a href="#architecture">Architecture at a glance</a></li>
+      <li><a href="#lanes">Six collection lanes</a></li>
+      <li><a href="#cil">Interaction logging (lane C)</a></li>
+      <li><a href="#collectors">Collector patterns</a></li>
+      <li><a href="#refresh">Gateway-free refresh</a></li>
+      <li><a href="#model">Semantic model</a></li>
+      <li><a href="#origin-risk">Origin and risk scoring</a></li>
+      <li><a href="#coverage">Platform coverage</a></li>
+      <li><a href="#findings">Lessons from the build</a></li>
+      <li><a href="#shadow-ai">Shadow AI on endpoints</a></li>
+      <li><a href="#permissions">Permissions</a></li>
+      <li><a href="#limitations">Limitations and upkeep</a></li>
+      <li><a href="#related">Related resources</a></li>
+    </ol>
+  </nav>
+
+  <main id="main" tabindex="-1">
+    <section class="section hero" id="top" aria-labelledby="page-title">
+      <p class="pill">Community project · Not a Microsoft product · Documentation only</p>
+      <h1 id="page-title">Custom Agent Reporting – Architecture</h1>
+      <p class="lede">A reference design for tenant-wide <strong>reporting</strong> on agents across Copilot Studio, Microsoft 365 Copilot Agent Builder, SharePoint agents and Microsoft Foundry. It is built from read-only Microsoft APIs, a few Power Automate collectors and a Power BI report.</p>
+      <p>This page documents a working build to show what a custom solution can do: the architecture, the data lanes, the lessons learned and screenshots of the result. The Power BI report file (PBIX) and the code that generates it aren't published. Interaction usage comes from a companion solution, <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>, which is published separately.</p>
+      <p>It isn't a product, and it is <strong>not a replacement for <a href="https://learn.microsoft.com/microsoft-agent-365/overview">Microsoft Agent 365</a></strong>.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#not-a-replacement">Read this first</a>
+        <a class="btn" href="#architecture">See the architecture</a>
+        <a class="btn" href="#screenshots">View screenshots</a>
+      </div>
+      <ul class="facts" aria-label="At a glance">
+        <li><strong>6 data lanes</strong><span>3 direct, 3 through daily collectors</span></li>
+        <li><strong>3 connectors</strong><span>Resource Graph, Dataverse, Web</span></li>
+        <li><strong>No gateway</strong><span>Scheduled refresh in the service</span></li>
+        <li><strong>21 tables</strong><span>A star schema around the agent</span></li>
+        <li><strong>166 measures</strong><span>In 12 display folders</span></li>
+        <li><strong>16 report pages</strong><span>287 visuals</span></li>
+        <li><strong>Read-only</strong><span>Never changes an agent</span></li>
+        <li><strong>Docs only</strong><span>No PBIX, solution or code</span></li>
+      </ul>
+    </section>
+
+    <section class="section" id="not-a-replacement" aria-labelledby="not-a-replacement-h">
+      <p class="section-kicker">Read this first</p>
+      <h2 id="not-a-replacement-h">Not a replacement for Microsoft Agent 365</h2>
+      <div class="callout callout-danger" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>This is a custom build, not a Microsoft product</p>
+        <p><a href="https://learn.microsoft.com/microsoft-agent-365/overview">Microsoft Agent 365</a> is Microsoft's control plane for agents: it helps organisations observe, govern and secure them. The design on this page only <strong>reports</strong>. It shows what a custom solution can do, and it doesn't do what Agent 365 does. If your organisation has Agent 365, use it.</p>
+      </div>
+      <ul>
+        <li><strong>You build, run and maintain it.</strong> Nothing here is a service. You own the collectors, the credentials, the refresh schedule and every fix when an API changes. Agent 365 is delivered and maintained by Microsoft.</li>
+        <li><strong>Reporting only.</strong> It reads metadata and draws a report. It can't create, change, block, quarantine or delete an agent.</li>
+        <li><strong>No agent identity management.</strong> It reads identity linkage properties, but it doesn't issue, govern or review agent identities.</li>
+        <li><strong>No content inspection or data loss prevention.</strong> It never reads prompts or responses, and it can't apply protection policies.</li>
+        <li><strong>No per-agent cost metering.</strong></li>
+        <li><strong>Coverage gaps.</strong> Some agents and properties aren't reachable through the public APIs it uses; see <a href="#coverage">Platform coverage</a>.</li>
+        <li><strong>No support.</strong> It is community documentation, shared as is. Microsoft doesn't support it.</li>
+      </ul>
+      <h3>How the scope compares</h3>
+      <div class="table-wrap">
+        <table class="wrap-head">
+          <thead><tr><th scope="col">Area</th><th scope="col">Microsoft Agent 365</th><th scope="col">This design</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Delivery</th><td>Microsoft service</td><td>Your own build – you run and maintain it</td></tr>
+            <tr><th scope="row">Observe</th><td>Registry, agent map, adoption, activity and health</td><td>A scheduled Power BI report</td></tr>
+            <tr><th scope="row">Govern</th><td>Lifecycle, access and compliance through the Microsoft 365 admin center, Microsoft Entra and Microsoft Purview</td><td>None – read-only</td></tr>
+            <tr><th scope="row">Secure</th><td>Entra risk-based access, Purview information protection and data loss prevention, and Microsoft Defender</td><td>A heuristic risk score, with no enforcement</td></tr>
+            <tr><th scope="row">Identity</th><td>Microsoft Entra Agent ID</td><td>Reads linkage properties only</td></tr>
+            <tr><th scope="row">Support</th><td>Microsoft</td><td>Community documentation, no support</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><small>Agent 365 capabilities are summarised from public Microsoft documentation at the time of writing and may change. Check the <a href="https://learn.microsoft.com/office365/servicedescriptions/microsoft-agent-365/microsoft-agent-365">service description</a> for the current scope.</small></p>
+      <p>The gaps listed on this page describe this design and the public APIs it uses, not Agent 365. Some registry attributes, such as an agent's description, its publisher, the named users it's shared with and its sensitivity label, weren't reachable in this build. If you have Agent 365, its registry and APIs are the better inventory source.</p>
+      <ul class="link-list">
+        <li><a href="https://learn.microsoft.com/microsoft-agent-365/overview">Agent 365 overview</a></li>
+        <li><a href="https://learn.microsoft.com/office365/servicedescriptions/microsoft-agent-365/microsoft-agent-365">Service description</a></li>
+        <li><a href="https://learn.microsoft.com/microsoft-365/admin/manage/agent-registry">Agent Registry</a></li>
+        <li><a href="https://learn.microsoft.com/microsoft-365/admin/manage/agent-map">Agent Map</a></li>
+        <li><a href="https://learn.microsoft.com/entra/agent-id/what-is-microsoft-entra-agent-id">Microsoft Entra Agent ID</a></li>
+        <li><a href="https://www.microsoft.com/en-us/microsoft-agent-365">Product page</a></li>
+      </ul>
+    </section>
+
+    <section class="section" id="screenshots" aria-labelledby="screenshots-h">
+      <p class="section-kicker">Proof it works</p>
+      <h2 id="screenshots-h">Screenshots from a working build</h2>
+      <p>Six of the 16 report pages from a working build. Names are fictitious and figures are indicative only. Select an image to enlarge it.</p>
+      <div class="gallery">
+        <figure class="shot">
+          <a class="shot-btn" href="assets/01-executive-overview.png"><img src="assets/01-executive-overview.png" width="1389" height="725" loading="lazy" decoding="async" alt="Executive overview report page. Cards for total agents, Copilot Studio agents, Microsoft 365 Agent Builder agents, Foundry projects, agents active in the last 30 days, high-risk agents, active users and agent run-time; donut charts of agents by platform and by activity status; estate health ratios; agents created over time; and the top environments."><span class="visually-hidden"> (enlarge)</span></a>
+          <figcaption><strong>Executive overview</strong> – The whole estate on one page, sliced by origin, platform, environment and risk. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+        </figure>
+        <figure class="shot">
+          <a class="shot-btn" href="assets/02-agent-inventory.png"><img src="assets/02-agent-inventory.png" width="1389" height="725" loading="lazy" decoding="async" alt="Agent inventory report page. Slicers for agent origin, platform, environment and risk band; cards for agents in view, distinct creators, human-built agents, environments, distinct models and total tools; bar charts of the top agent creators, models in use and regions; and an agent register table."><span class="visually-hidden"> (enlarge)</span></a>
+          <figcaption><strong>Agent inventory</strong> – A register with creator, owner, environment, orchestration, model, authentication and risk band. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+        </figure>
+        <figure class="shot">
+          <a class="shot-btn" href="assets/03-copilot-interactions.png"><img src="assets/03-copilot-interactions.png" width="1389" height="725" loading="lazy" decoding="async" alt="Copilot interactions report page. Slicers for date range, surface type and platform; cards for interactions, sessions, autonomous runs, Agent Builder turns, agents with usage and telemetry uplift; an interaction trend; a donut showing where the traffic goes; sessions and turns by month; and client surfaces."><span class="visually-hidden"> (enlarge)</span></a>
+          <figcaption><strong>Copilot interactions</strong> – Per-agent usage from the audit log through Copilot Interaction Logging, including autonomous runs and SharePoint agents. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+        </figure>
+        <figure class="shot">
+          <a class="shot-btn" href="assets/04-governance-risk.png"><img src="assets/04-governance-risk.png" width="1389" height="725" loading="lazy" decoding="async" alt="Governance and risk report page. Cards for high-risk and medium-risk agents, agents shared tenant-wide, agents with no authentication, agents shared but unused and the average risk score; a risk band donut; a bar chart of authentication modes; the risk scoring model table; and a table of the highest-risk agents with their risk reasons."><span class="visually-hidden"> (enlarge)</span></a>
+          <figcaption><strong>Governance &amp; risk</strong> – Sharing, unauthenticated agents, quarantine and an explainable risk score. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+        </figure>
+        <figure class="shot">
+          <a class="shot-btn" href="assets/05-knowledge-sources.png"><img src="assets/05-knowledge-sources.png" width="1389" height="725" loading="lazy" decoding="async" alt="Knowledge sources report page. Cards for named sources, sources collected, distinct hosts, reads outside the tenant, agents reaching out and coverage against Azure Resource Graph counts; named sources by type; hosts grounded in; a type-by-platform matrix; and agents reaching outside the tenant by environment."><span class="visually-hidden"> (enlarge)</span></a>
+          <figcaption><strong>Knowledge sources</strong> – SharePoint sites, websites, Dataverse tables, Graph connectors and Azure AI Search indexes. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+        </figure>
+        <figure class="shot">
+          <a class="shot-btn" href="assets/06-azure-ai-foundry.png"><img src="assets/06-azure-ai-foundry.png" width="1389" height="725" loading="lazy" decoding="async" alt="Azure AI Foundry report page. Cards for Azure AI resources, Foundry projects, resources open to public networks, regions, resource groups and agent flows; a resource categories donut; regions; SKUs; and a Foundry estate table."><span class="visually-hidden"> (enlarge)</span></a>
+          <figcaption><strong>Azure AI Foundry</strong> – Regions, SKUs and public network exposure. The service is now called Microsoft Foundry. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+        </figure>
+      </div>
+      <p>The other ten pages: All agents, Agent analytics, Creators &amp; ownership, Usage &amp; popularity, Adoption &amp; activity, Tools &amp; integration, Knowledge &amp; grounding, Data sources &amp; gaps, Shadow AI (endpoints) and SharePoint agents.</p>
+    </section>
+
+    <section class="section" id="architecture" aria-labelledby="architecture-h">
+      <p class="section-kicker">How it fits together</p>
+      <h2 id="architecture-h">Architecture at a glance</h2>
+      <p>Read-only Microsoft APIs feed one Power BI semantic model. Three lanes go straight into the model at refresh. The other three need a small daily collector, because Power BI can't call those APIs itself.</p>
+      <div class="diagram-wrap">
+      <svg viewBox="0 0 1000 630" role="img" aria-labelledby="arch-title arch-desc">
+        <title id="arch-title">Custom agent reporting architecture</title>
+        <desc id="arch-desc">Three bands. Sources: Azure Resource Graph (lane A), the Purview audit log (lanes C and E), the Dataverse database in each environment (lane D) and Defender XDR (lane F). Resource Graph and Defender connect straight to the Power BI semantic model. The audit log feeds two daily Power Automate collectors, interaction logging and SharePoint agents, and each environment's Dataverse feeds the knowledge sweep. The collectors write to a reporting Dataverse, which also supplies user names (lane B) and connects to the model through an OData feed. The model feeds a 16-page Power BI report.</desc>
+        <defs><marker id="arrow-arch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-arrowhead" d="M0 0 10 5 0 10z"/></marker></defs>
+        <rect class="d-band" x="10" y="10" width="980" height="140" rx="12"/>
+        <text class="d-band-title" x="56" y="30">1 · SOURCES — READ-ONLY MICROSOFT APIS</text>
+        <rect class="d-box" x="20" y="44" width="176" height="88" rx="10"/>
+        <text class="d-title" x="32" y="68">Azure Resource Graph</text>
+        <text class="d-text d-mono" x="32" y="88">PowerPlatformResources</text>
+        <text class="d-text" x="32" y="104">resources (Foundry)</text>
+        <text class="d-text" x="32" y="120">Lane A</text>
+        <rect class="d-box" x="314" y="44" width="176" height="88" rx="10"/>
+        <text class="d-title" x="326" y="68">Purview audit log</text>
+        <text class="d-text" x="326" y="88">Graph auditLog/queries</text>
+        <text class="d-text" x="326" y="104">POST · async</text>
+        <text class="d-text" x="326" y="120">Lanes C and E</text>
+        <rect class="d-box" x="510" y="44" width="176" height="88" rx="10"/>
+        <text class="d-title" x="522" y="68">Dataverse</text>
+        <text class="d-text" x="522" y="88">One per environment</text>
+        <text class="d-text d-mono" x="522" y="104">botcomponents</text>
+        <text class="d-text" x="522" y="120">Lane D</text>
+        <rect class="d-box" x="804" y="44" width="176" height="88" rx="10"/>
+        <text class="d-title" x="816" y="68">Defender XDR</text>
+        <text class="d-text" x="816" y="88">Advanced hunting API</text>
+        <text class="d-text" x="816" y="104">Device* tables</text>
+        <text class="d-text" x="816" y="120">Lane F</text>
+        <rect class="d-band" x="10" y="190" width="980" height="190" rx="12"/>
+        <text class="d-band-title" x="56" y="210">2 · COLLECTORS</text>
+        <path class="d-arrow" d="M360 132V172H304V220" marker-end="url(#arrow-arch)"/>
+        <path class="d-arrow" d="M444 132V172H500V220" marker-end="url(#arrow-arch)"/>
+        <path class="d-arrow" d="M640 132V172H696V220" marker-end="url(#arrow-arch)"/>
+        <rect class="d-box" x="216" y="222" width="176" height="80" rx="10"/>
+        <text class="d-title" x="228" y="246">Interaction logging</text>
+        <text class="d-text" x="228" y="266">Power Automate · daily</text>
+        <text class="d-text" x="228" y="282">Lane C</text>
+        <rect class="d-box" x="412" y="222" width="176" height="80" rx="10"/>
+        <text class="d-title" x="424" y="246">SharePoint agents</text>
+        <text class="d-text" x="424" y="266">Power Automate · daily</text>
+        <text class="d-text" x="424" y="282">Lane E</text>
+        <rect class="d-box" x="608" y="222" width="176" height="80" rx="10"/>
+        <text class="d-title" x="620" y="246">Knowledge sweep</text>
+        <text class="d-text" x="620" y="266">Power Automate · daily</text>
+        <text class="d-text" x="620" y="282">Lane D</text>
+        <path class="d-arrow" d="M304 302V318" marker-end="url(#arrow-arch)"/>
+        <path class="d-arrow" d="M500 302V318" marker-end="url(#arrow-arch)"/>
+        <path class="d-arrow" d="M696 302V318" marker-end="url(#arrow-arch)"/>
+        <rect class="d-store" x="216" y="320" width="568" height="44" rx="8"/>
+        <text class="d-store-text" x="500" y="347" text-anchor="middle">Reporting Dataverse — collector tables (C, D, E) · systemuser (B)</text>
+        <rect class="d-band" x="10" y="400" width="980" height="220" rx="12"/>
+        <text class="d-band-title" x="56" y="420">3 · MODEL AND REPORT</text>
+        <path class="d-arrow" d="M40 132V430" marker-end="url(#arrow-arch)"/>
+        <text class="d-label" x="50" y="290">ARG connector</text>
+        <text class="d-label" x="50" y="304">Lane A</text>
+        <path class="d-arrow" d="M960 132V430" marker-end="url(#arrow-arch)"/>
+        <text class="d-label" x="950" y="290" text-anchor="end">Web connector</text>
+        <text class="d-label" x="950" y="304" text-anchor="end">Lane F</text>
+        <path class="d-arrow" d="M500 364V430" marker-end="url(#arrow-arch)"/>
+        <text class="d-label" x="510" y="394">Dataverse (OData feed)</text>
+        <rect class="d-box" x="20" y="432" width="960" height="72" rx="10"/>
+        <text class="d-title" x="56" y="456">Power BI semantic model</text>
+        <text class="d-text" x="56" y="476">21 tables · 166 measures · star schema · scheduled refresh · no gateway</text>
+        <path class="d-arrow" d="M500 504V538" marker-end="url(#arrow-arch)"/>
+        <rect class="d-box" x="412" y="540" width="176" height="64" rx="10"/>
+        <text class="d-title" x="424" y="564">Power BI report</text>
+        <text class="d-text" x="424" y="584">16 pages · 287 visuals</text>
+      </svg>
+      </div>
+      <ul>
+        <li><strong>Read-only.</strong> It never changes an agent. The only writes are the collectors' rows in your own Dataverse, plus lane D's application user in each environment if you use its provisioning flow.</li>
+        <li><strong>Three connectors.</strong> Azure Resource Graph, Dataverse (as an OData feed) and the Web connector for Defender advanced hunting. The model never calls Purview or Power Automate.</li>
+        <li><strong>No gateway.</strong> Every source refreshes in the Power BI service; see <a href="#refresh">Refresh without a gateway</a>.</li>
+        <li><strong>Dataverse is a convenience.</strong> Azure SQL Database or a Fabric lakehouse would work as the collector store too. Only the collectors' write step and the model's data-access function would change.</li>
+        <li><strong>Data first, generated from code.</strong> The pages were designed around what the APIs actually return, and the semantic model and report are generated from code, so a rebuild is repeatable.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="lanes" aria-labelledby="lanes-h">
+      <p class="section-kicker">Data</p>
+      <h2 id="lanes-h">Six collection lanes</h2>
+      <p>Lanes A, B and F need nothing installed: the semantic model queries them at refresh. Lanes C, D and E need a small collector, because Power BI can't call those APIs directly (see <a href="#collectors">Collectors</a>).</p>
+      <div class="table-wrap">
+        <table class="wrap-head">
+          <thead><tr><th scope="col">Lane</th><th scope="col">Collects</th><th scope="col">How</th><th scope="col">Model connects to</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">A – agent inventory</th><td>Copilot Studio and Agent Builder agents, Foundry projects, agent flows and environments</td><td>Power BI queries Azure Resource Graph at refresh</td><td>Azure Resource Graph connector</td></tr>
+            <tr><th scope="row">B – owner and creator identity</th><td>Display names for creators and owners</td><td>Dataverse at refresh</td><td><code>systemuser</code> in the reporting environment</td></tr>
+            <tr><th scope="row">C – interaction telemetry</th><td>Per-turn usage from the Purview audit log, including SharePoint agents</td><td>A daily flow writes to Dataverse</td><td>Dataverse</td></tr>
+            <tr><th scope="row">D – named knowledge sources</th><td>The sites, indexes and connectors each agent reads</td><td>A daily sweep of <code>botcomponents</code> (component type 16) in every environment</td><td>Dataverse</td></tr>
+            <tr><th scope="row">E – SharePoint agent inventory</th><td><code>.agent</code> files: current or deleted, names, sites and URLs</td><td>A daily flow over file-operation audit records</td><td>Dataverse</td></tr>
+            <tr><th scope="row">F – Shadow AI on endpoints</th><td>Unsanctioned AI desktop tools on managed devices</td><td>Defender advanced hunting at refresh</td><td>Web connector to <code>api.security.microsoft.com</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Lane B – resolving names</h3>
+      <ul>
+        <li>Names come from the reporting environment's <code>systemuser</code> table. Any Dataverse role that can read it is enough, such as Basic User.</li>
+        <li>It only covers principals that exist in that environment. Microsoft Graph <code>directoryObjects/getByIds</code> would cover the whole directory, but it isn't gateway-free from Power BI.</li>
+        <li>Relabel the null GUID <code>00000000-0000-0000-0000-000000000000</code> as "System / platform" <strong>before</strong> the lookup, or it shows as a blank creator.</li>
+        <li>Agent Builder creators resolve fully. Foundry projects carry no creator at all.</li>
+        <li>The names are denormalised onto the Agent table (<code>CreatedByName</code>, <code>OwnerName</code>, <code>OwnerUpn</code>), so visuals don't need a second hop.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="cil" aria-labelledby="cil-h">
+      <p class="section-kicker">Companion solution</p>
+      <h2 id="cil-h">Interaction logging (lane C)</h2>
+      <div class="callout callout-accent" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Lane C is published as its own solution</p>
+        <p>The interaction collector is available separately as <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>. It ships managed and unmanaged Power Platform packages, with an <a href="https://ryanbowie.github.io/copilot-interaction-logging/">installation guide</a> that walks you through the secret-handling decision and the environment variables before you install.</p>
+      </div>
+      <p>What lane C adds to the model:</p>
+      <ul>
+        <li><strong>Surface classification.</strong> Each audit record is classified by its <code>AppIdentity</code>: Copilot Studio agent, Microsoft 365 Copilot (base chat), custom engine agent, Microsoft first-party agent, Copilot Studio (other), Fabric or Power BI copilot, personal agent, Agent Builder agent, Teams Toolkit agent, declarative agent, or Agent Builder authoring.</li>
+        <li><strong>Autonomous runs.</strong> A large share of agent activity can be autonomous, triggered by events rather than people, so "active users" alone understates usage.</li>
+        <li><strong>Per-turn timestamps.</strong> The audit log is the only source of per-turn timestamps. Sessions are a distinct count, so monthly session figures don't add up to the total.</li>
+        <li><strong>Agent Builder.</strong> Records join to inventory through <code>Copilot.Studio.Declarative.T_&lt;titleId&gt;</code>. The title ID only exists once an agent is published, so drafts never join.</li>
+        <li><strong>SharePoint agents.</strong> The identity <code>SPO_…_&lt;drive item id&gt;</code> decodes to the file's <code>ListItemUniqueId</code>, which joins to lane E.</li>
+      </ul>
+      <div class="callout callout-warning" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>Operational notes</p>
+        <ul>
+          <li>Audit records can lag by up to about 24 hours, so each collection window ends well short of now.</li>
+          <li>A skipped day doesn't heal itself. Re-run the collector for the missing window.</li>
+          <li>If you store the client secret in a plain-text environment variable, remove its current value before you export the solution, because exports include it.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section" id="collectors" aria-labelledby="collectors-h">
+      <p class="section-kicker">Out-of-band</p>
+      <h2 id="collectors-h">Collector patterns</h2>
+      <p>Three lanes need a collector: a scheduled Power Automate flow that calls an API Power BI can't call, and writes the result to Dataverse tables that the model then reads.</p>
+      <div class="table-wrap">
+        <table class="wrap-head">
+          <thead><tr><th scope="col"><span class="visually-hidden">Aspect</span></th><th scope="col">Lane C – interactions</th><th scope="col">Lane D – knowledge sources</th><th scope="col">Lane E – SharePoint agents</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Adds</th><td>Who used which agent, when and how often</td><td>Which site, website or index each agent reads</td><td>Which <code>.agent</code> files exist, and their state</td></tr>
+            <tr><th scope="row">Why Power BI can't read it</th><td>A POST-only, asynchronous audit API, with a token audience the Web connector can't request</td><td>One Dataverse per environment, so the endpoint would be a computed (dynamic) data source</td><td>The same asynchronous POST API, and the records need grouping</td></tr>
+            <tr><th scope="row">Permissions</th><td><code>AuditLogsQuery.Read.All</code> (application), with admin consent</td><td>No API permissions; an application user in each environment</td><td>The same permission, so it can reuse lane C's app; no <code>Sites.Read.All</code></td></tr>
+            <tr><th scope="row">Pages empty without it</th><td>Copilot interactions and usage uplift</td><td>Knowledge sources</td><td>SharePoint agents inventory</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>That's two app registrations in total: an audit app shared by lanes C and E, and a knowledge-sweep app for lane D. Defender uses the report owner's own credentials in Power BI, so it needs no app.</p>
+      <details>
+        <summary>Lane C – interaction collector</summary>
+        <div class="details-body">
+          <ol class="steps">
+            <li><span class="step-title">Credential</span> Read the client secret from Azure Key Vault or a secret-type environment variable.</li>
+            <li><span class="step-title">Window</span> Choose a window that ends well short of now, to allow for audit ingestion lag.</li>
+            <li><span class="step-title">Query</span> POST the audit query, then poll until it completes.</li>
+            <li><span class="step-title">Page and upsert</span> Page through the results and upsert each record on its audit record ID, so a re-run never duplicates rows.</li>
+            <li><span class="step-title">Log</span> Write a run-log row with counts and errors.</li>
+          </ol>
+          <p>Every HTTP call has a retry policy. The full, tested flow is in <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Lane D – knowledge-source sweep</summary>
+        <div class="details-body">
+          <ol class="steps">
+            <li>Get the credential and open a run-log row.</li>
+            <li>Read the manifest of environments the app can reach.</li>
+            <li>Build a key-to-row-ID index of existing rows. The Dataverse connector only updates by primary-key GUID and refuses alternate keys.</li>
+            <li>Sweep environments 20 at a time, with one GET per environment on <code>botcomponents</code>, expanding <code>parentbotid</code>.</li>
+            <li>Extract each source's name, kind and locator from the component YAML with a single Select action.</li>
+            <li>Write rows 8 at a time.</li>
+            <li>Tombstone missing sources only after a clean run. The guard re-reads error and fresh-row counts from Dataverse, because counters updated inside concurrent loops aren't reliable.</li>
+            <li>Close the run log.</li>
+          </ol>
+        </div>
+      </details>
+      <details>
+        <summary>Lane D – provisioning the application user</summary>
+        <div class="details-body">
+          <p>The sweep needs an application user in every environment it reads. An optional provisioning flow keeps that list current:</p>
+          <ul>
+            <li><strong>Scope.</strong> Target either the environments that contain agents (from Azure Resource Graph) or every environment with Dataverse. The Resource Graph route needs Reader at the tenant root management group, because <code>PowerPlatformResources</code> rows are tenant-scoped, with an empty <code>subscriptionId</code>.</li>
+            <li><strong>Grants.</strong> List the environments, subtract those already in the manifest and call <code>addAppUser</code> for the rest. Prove each grant by signing in as the service principal and calling <code>WhoAmI</code>, because a 200 from <code>addAppUser</code> is optimistic. Record each proven grant, so the manifest doubles as the revocation list.</li>
+            <li><strong>Run controls.</strong> What-if mode by default, a per-run cap applied before the loop, and idempotent, self-healing runs.</li>
+            <li><strong>HTTP and authentication.</strong> Each HTTP call turns off the asynchronous pattern and uses a 3-minute timeout. The flow uses a client secret, because the HTTP with Microsoft Entra ID connector isn't preauthorised for this API (<code>AADSTS65002</code>). Register the service principal as a Power Platform admin management application. Don't rely on global discovery, which under-reports environments for app-only identities. After changing an environment variable, turn the flow off and on again.</li>
+          </ul>
+          <div class="callout callout-warning" role="note">
+            <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>System Administrator in every environment</p>
+            <p><code>addAppUser</code> grants the <strong>System Administrator</strong> role, with no lower option. Treat the app's secret accordingly. Deleting the app registration revokes its access everywhere at once.</p>
+          </div>
+        </div>
+      </details>
+      <details>
+        <summary>Lane E – SharePoint agent inventory</summary>
+        <div class="details-body">
+          <ol class="steps">
+            <li>Query <code>sharePointFileOperation</code> audit records with the keyword <code>.agent</code> (default look-back 180 days).</li>
+            <li>Poll until the query completes, then page through the results.</li>
+            <li>Group by lower-case <code>ListItemUniqueId</code>. If a file's latest operation is a delete or recycle, mark it deleted.</li>
+            <li>Upsert by row ID.</li>
+            <li>Delete stale rows only after a successful, non-empty query with zero errors.</li>
+            <li>Log the run.</li>
+          </ol>
+          <p>The result is an inventory of what was observed within audit retention, not a census: an <code>.agent</code> file with no operation inside the window isn't seen.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="section" id="refresh" aria-labelledby="refresh-h">
+      <p class="section-kicker">Power BI</p>
+      <h2 id="refresh-h">Gateway-free scheduled refresh</h2>
+      <p>The model refreshes on a schedule in the Power BI service with no on-premises data gateway. Three rules make that work:</p>
+      <ol class="steps">
+        <li><span class="step-title">Use certified connectors or static base URLs</span> The service must be able to see every data source before refresh, so each one needs a fixed address.</li>
+        <li><span class="step-title">Navigate, don't concatenate</span> A URL built at refresh time is a <a href="https://learn.microsoft.com/power-bi/connect-data/refresh-data#refresh-and-dynamic-data-sources">dynamic data source</a>, which the service won't refresh. <code>OData.Feed</code> has no <code>RelativePath</code> option, so open the service document and navigate to the table instead.</li>
+        <li><span class="step-title">Organisational credentials and the Organizational privacy level</span> Sign in to all three sources with an organisational account and set each one's <a href="https://learn.microsoft.com/power-query/privacy-levels">privacy level</a> to <strong>Organizational</strong>. Private trips the formula firewall when sources are combined.</li>
+      </ol>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Source</th><th scope="col">Connector</th><th scope="col">Why this one</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Azure Resource Graph</th><td><code>AzureResourceGraph.Query</code></td><td>The Web connector can't send an authenticated POST or request the Azure Resource Manager audience, <code>https://management.core.windows.net</code></td></tr>
+            <tr><th scope="row">Dataverse</th><td><code>OData.Feed</code></td><td>The same audience problem rules out the Web connector</td></tr>
+            <tr><th scope="row">Defender advanced hunting</th><td><code>Web.Contents</code></td><td>A plain GET against a fixed host</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Defender, with a static host and the query passed as options:</p>
+      <div class="code-box"><code id="m-defender">Web.Contents(
+    "https://api.security.microsoft.com",
+    [RelativePath = "api/advancedqueries", Query = [key = query]])</code><button type="button" class="btn btn-sm copy-btn" data-copy-target="m-defender" data-jsonly hidden>Copy</button></div>
+      <p>For a regional host (<code>uk.</code>, <code>eu.</code>, <code>us.</code> or <code>au.</code>), edit the literal rather than parameterising it.</p>
+      <p>Dataverse, navigating from the service document:</p>
+      <div class="code-box"><code id="m-dataverse">let
+    Source = OData.Feed("https://&lt;org&gt;.crm.dynamics.com/api/data/v9.2/"),
+    Rows = Source{[Name = "&lt;entityset&gt;"]}[Data]
+in
+    Rows</code><button type="button" class="btn btn-sm copy-btn" data-copy-target="m-dataverse" data-jsonly hidden>Copy</button></div>
+      <div class="callout callout-info" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Skip test connection for Defender</p>
+        <p>When you enter the Defender credentials in the service, tick <strong>Skip test connection</strong>. The API root returns 404, so the test fails even though refresh works.</p>
+      </div>
+      <p>Then set the schedule in the semantic model's settings; see <a href="https://learn.microsoft.com/power-bi/connect-data/refresh-scheduled-refresh">Configure scheduled refresh</a>.</p>
+    </section>
+
+    <section class="section" id="model" aria-labelledby="model-h">
+      <p class="section-kicker">Model</p>
+      <h2 id="model-h">Semantic model</h2>
+      <p>A star schema with the agent at the centre: 21 tables, and 166 measures in 12 display folders, all held in a measure-only <code>Metrics</code> table.</p>
+      <h3>Main tables</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Group</th><th scope="col">Tables</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Inventory</th><td>Agent (one row per agent per environment, across all platforms), Environment, AgentFlow, AzureAIResource, SharePointAgent</td></tr>
+            <tr><th scope="row">Configuration</th><td>AgentConnector (with an <code>IsMcpServer</code> flag), AgentKnowledge, KnowledgeSource</td></tr>
+            <tr><th scope="row">People</th><td>User</td></tr>
+            <tr><th scope="row">Usage</th><td>Interaction (one row per turn), CopilotSurface, TelemetryCoverage</td></tr>
+            <tr><th scope="row">Risk</th><td>RiskFactor, RiskDetail</td></tr>
+            <tr><th scope="row">Coverage</th><td>ApiCoverage</td></tr>
+            <tr><th scope="row">Shadow AI</th><td>A watchlist-driven tool catalogue, signals and devices</td></tr>
+            <tr><th scope="row">Support</th><td>Date, Metrics, Pages</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Relationships</h3>
+      <ul>
+        <li>Agent and AgentFlow relate to Environment.</li>
+        <li>AgentConnector, AgentKnowledge and KnowledgeSource relate to Agent.</li>
+        <li>Agent relates to User twice, for the creator and the owner.</li>
+        <li><code>Interaction[SurfaceKey]</code> relates to CopilotSurface, and <code>Interaction[AgentKey]</code> to Agent. <code>CopilotSurface[SharePointAgentKey]</code> relates to SharePointAgent.</li>
+        <li><code>Interaction[Date]</code> to Date is active. <code>Agent[CreatedDate]</code> and <code>Agent[LastUsedDate]</code> to Date are inactive and used through <a href="https://learn.microsoft.com/dax/userelationship-function-dax">USERELATIONSHIP</a>, because two active paths to Date are ambiguous and Power BI Desktop refuses to load the model.</li>
+      </ul>
+      <h3>Fallback labels</h3>
+      <p>Every lookup has a visible fallback: <code>Unlisted: &lt;id&gt;</code>, "Unknown", "Not specified" (kept distinct from "Copilot Studio default") and "Agent no longer in inventory". A blank sorts first in most visuals and looks like a fault.</p>
+    </section>
+
+    <section class="section" id="origin-risk" aria-labelledby="origin-risk-h">
+      <p class="section-kicker">Classification</p>
+      <h2 id="origin-risk-h">Origin and risk scoring</h2>
+      <h3>Origin</h3>
+      <p>Origin is the first slicer on every page, because platform scaffolding otherwise drowns out the agents people actually built.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Origin</th><th scope="col">Rule</th><th scope="col">Examples</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Platform-provisioned</th><td>Created by the null GUID</td><td>Scaffolding, template copies and system bots</td></tr>
+            <tr><th scope="row">Human-built</th><td>The creator resolves to a real principal</td><td>Agents that people built</td></tr>
+            <tr><th scope="row">Creator unknown</th><td>No creator is recorded</td><td>All Foundry projects</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>"Creator unknown" is kept separate on purpose: folding it into either of the other two would overstate one of them.</p>
+      <h3>Risk score</h3>
+      <p>Each agent gets points for the conditions below. The total sets its band, and a <code>RiskReasons</code> column explains the score, for example "No authentication (+3); Shared with entire tenant (+2)".</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Condition</th><th scope="col">Points</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">No authentication</th><td>+3</td></tr>
+            <tr><th scope="row">Quarantined</th><td>+3</td></tr>
+            <tr><th scope="row">Shared with the entire tenant</th><td>+2</td></tr>
+            <tr><th scope="row">Shared tenant-wide and never used</th><td>+1</td></tr>
+            <tr><th scope="row">Web search turned on</th><td>+1</td></tr>
+            <tr><th scope="row">Uses connectors</th><td>+1</td></tr>
+            <tr><th scope="row">Connected to other agents</th><td>+1</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Bands: <span class="badge badge-danger">High</span> 5 or more · <span class="badge badge-warning">Medium</span> 3–4 · <span class="badge badge-success">Low</span> under 3.</p>
+      <div class="callout callout-warning" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>A heuristic, not an assessment</p>
+        <p>The score ranks agents for review; it doesn't prove that an agent is safe or unsafe. Tune the weights and conditions to your own policies before you rely on it.</p>
+      </div>
+    </section>
+
+    <section class="section" id="coverage" aria-labelledby="coverage-h">
+      <p class="section-kicker">Completeness</p>
+      <h2 id="coverage-h">Platform coverage</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Platform</th><th scope="col">Inventory</th><th scope="col">Configuration</th><th scope="col">Usage</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Copilot Studio</th><td><span class="badge badge-success">Full</span></td><td><span class="badge badge-success">Full</span></td><td><span class="badge badge-success">Full</span> Inventory usage fields plus the audit log</td></tr>
+            <tr><th scope="row">Microsoft 365 Agent Builder</th><td><span class="badge badge-success">Full</span> <code>createdIn = "Copilot Studio Lite"</code></td><td><span class="badge badge-success">Full</span></td><td><span class="badge badge-warning">Audit only</span></td></tr>
+            <tr><th scope="row">SharePoint agents</th><td><span class="badge badge-warning">Observed</span> Within audit retention (lane E)</td><td><span class="badge badge-warning">Partial</span> File, site and URL</td><td><span class="badge badge-success">Audit</span></td></tr>
+            <tr><th scope="row">Microsoft Foundry (formerly Azure AI Foundry)</th><td><span class="badge badge-warning">Projects only</span> Depends on Azure RBAC</td><td><span class="badge badge-warning">Partial</span></td><td><span class="badge badge-danger">None</span></td></tr>
+            <tr><th scope="row">Agent flows</th><td><span class="badge badge-success">Full</span></td><td><span class="badge badge-success">Full</span></td><td><span class="badge badge-warning">Partial</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Completeness checks</h3>
+      <ul>
+        <li>A single Azure Resource Graph type holds all the Copilot Studio and Agent Builder agents.</li>
+        <li><code>createdIn</code> has exactly two values, and their counts add up to the total.</li>
+        <li>Power Platform rows aren't filtered by Azure RBAC. What you see depends on the signed-in user's admin role instead, so a user without one gets a partial list with no error.</li>
+      </ul>
+      <h3>Activity</h3>
+      <p><code>LastActivityAt</code> is the later of the inventory's last-used date and the latest audit record for the agent. An agent only counts as unused when both are silent.</p>
+      <h3>What it can't see</h3>
+      <ul>
+        <li>Agents surfaced as Microsoft 365 apps: the app catalogue (<code>/appCatalogs/teamsApps</code>) wasn't reachable in this build.</li>
+        <li>Agents deleted since they were used. Their audit records show as "Agent no longer in inventory".</li>
+        <li><code>.agent</code> files with no file operation inside audit retention.</li>
+        <li>Agents inside Foundry projects, which need data-plane roles on each project.</li>
+      </ul>
+      <p>In this build, most audit interactions resolved to an inventoried agent. Most of the rest were base Microsoft 365 Copilot chat and Microsoft first-party agents, which have no inventory row to join to.</p>
+    </section>
+
+    <section class="section" id="findings" aria-labelledby="findings-h">
+      <p class="section-kicker">Gotchas</p>
+      <h2 id="findings-h">Lessons from the build</h2>
+      <p>Lessons from building against the real APIs. Each one cost time to find, and most aren't obvious from the documentation.</p>
+      <details>
+        <summary>Azure Resource Graph pages silently</summary>
+        <div class="details-body">
+          <p>Results come back 1,000 rows per page. Order by <code>id</code> so paging is stable, follow <code>$skipToken</code> until it's gone, and reconcile the row total against a single <code>summarize count()</code> query. See <a href="https://learn.microsoft.com/azure/governance/resource-graph/concepts/work-with-data#paging-results">Paging results</a>.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Detecting MCP servers needs a regex</summary>
+        <div class="details-body">
+          <p>To flag connectors that are MCP servers, match the serialised tool list with <code>matches regex '"type":"MCP"'</code>. A plain <code>contains</code> test was unreliable in this build.</p>
+        </div>
+      </details>
+      <details>
+        <summary><code>entraAgentId</code> is not <code>entraAppId</code></summary>
+        <div class="details-body">
+          <p>The two properties identify different directory objects. Never join on one as if it were the other.</p>
+        </div>
+      </details>
+      <details>
+        <summary><code>knowledgeByType</code> gives counts, not names</summary>
+        <div class="details-body">
+          <p>The inventory record counts each kind of knowledge (<code>graphConnectors</code>, <code>dataverseSources</code>, <code>publicSites</code>, <code>files</code>, <code>fileGroups</code>, <code>sharepointSites</code>, <code>powerPlatformConnectors</code>, <code>bingCustomSearch</code> and <code>teamsMessages</code>) but doesn't name the sources. Lane D supplies the names.</p>
+        </div>
+      </details>
+      <details>
+        <summary>The inventory record is rich</summary>
+        <div class="details-body">
+          <p>Each agent's Resource Graph record carries about 31 properties, covering authentication, sharing, quarantine, connectors, knowledge counts, connected agents, instructions and usage. Most of the governance pages are built from this one record.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Agent Builder agents live in the same table</summary>
+        <div class="details-body">
+          <p>They're distinguished by <code>createdIn = "Copilot Studio Lite"</code>. Their <code>titleId</code>, which joins audit records to inventory, only exists once an agent is published.</p>
+        </div>
+      </details>
+      <details>
+        <summary>SharePoint agents are <code>.agent</code> files</summary>
+        <div class="details-body">
+          <p>They have no Resource Graph record. Lane E builds their inventory from file-operation audit records, and lane C's <code>SPO_…_&lt;drive item id&gt;</code> identity decodes to the same <code>ListItemUniqueId</code>, which links usage to the file.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Foundry shows projects, not agents</summary>
+        <div class="details-body">
+          <p>Resource Graph lists Foundry projects. The agents inside them sit behind each project's data plane, which needs per-project roles, so the report counts projects only.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Avoid CALCULATE in calculated columns</summary>
+        <div class="details-body">
+          <p><a href="https://learn.microsoft.com/dax/calculate-function-dax">CALCULATE</a> triggers context transition, which makes the column depend on every other column in the table. The result can be a circular dependency or a column that's silently blank. Use <code>MAXX(FILTER(…))</code> instead. A build-time check enforces this rule.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Run-time is a floor</summary>
+        <div class="details-body">
+          <p>Agent run-time is measured as elapsed time per conversation thread per day. Treat it as a lower bound, not a precise figure.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Guard deletes with fresh counts</summary>
+        <div class="details-body">
+          <p>Before a collector deletes or tombstones rows, it re-reads error and row counts from Dataverse rather than trusting variables updated inside concurrent loops. A failed or partial run then can't empty a table.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Instruction text isn't collected</summary>
+        <div class="details-body">
+          <p>An agent's instruction text only exists in the YAML of <code>botcomponent</code> type 15, which this build doesn't collect. Whether an agent has instructions comes from Resource Graph instead.</p>
+        </div>
+      </details>
+    </section>
+
+    <section class="section" id="shadow-ai" aria-labelledby="shadow-ai-h">
+      <p class="section-kicker">Endpoints</p>
+      <h2 id="shadow-ai-h">Shadow AI on managed endpoints</h2>
+      <p>Lane F uses <a href="https://learn.microsoft.com/defender-xdr/advanced-hunting-overview">Microsoft Defender advanced hunting</a> to look for unsanctioned AI tools on managed devices, through three layers of evidence.</p>
+      <div class="table-wrap">
+        <table class="wrap-head">
+          <thead><tr><th scope="col">Layer</th><th scope="col">Table</th><th scope="col">Proves</th><th scope="col">Limits</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Installed</th><td><a href="https://learn.microsoft.com/defender-xdr/advanced-hunting-devicetvmsoftwareinventory-table"><code>DeviceTvmSoftwareInventory</code></a></td><td>A packaged app is present</td><td>Misses portable, per-user and installer-free tools</td></tr>
+            <tr><th scope="row">Executed (30 days)</th><td><a href="https://learn.microsoft.com/defender-xdr/advanced-hunting-deviceprocessevents-table"><code>DeviceProcessEvents</code></a></td><td>The tool ran, and who ran it, including command-line tools such as Claude Code and GitHub Copilot CLI</td><td>Misses tools that weren't launched in the window</td></tr>
+            <tr><th scope="row">Network (30 days)</th><td><a href="https://learn.microsoft.com/defender-xdr/advanced-hunting-devicenetworkevents-table"><code>DeviceNetworkEvents</code></a></td><td>The device reached an AI service</td><td>The broadest layer, and the only one that sees browser use, but contact isn't proof of use</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>One watchlist drives both the queries and the tool catalogue, so an empty page means "none found", not "not checked".</li>
+        <li>Whether a tool is sanctioned is your own policy, held in the watchlist.</li>
+        <li>The vendor match is left blank for Microsoft, Google, GitHub and Hugging Face, whose names are too broad, so those tools match on product name alone.</li>
+        <li>The longest term wins, so "GitHub Copilot CLI" matches before "Copilot".</li>
+      </ul>
+      <div class="callout callout-warning" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>Watch for false positives</p>
+        <p>Developer packages such as <code>node-cli-cursor</code> and <code>restore-cursor</code> matched the term "cursor". The fix was a server-side name-prefix match combined with a vendor match.</p>
+      </div>
+      <div class="callout callout-info" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>A floor, not a census</p>
+        <p>Results only cover devices onboarded to Defender for Endpoint; unmanaged and personal devices are invisible. Defender for Cloud Apps <a href="https://learn.microsoft.com/defender-cloud-apps/set-up-cloud-discovery">Cloud Discovery</a> is complementary and isn't wired into this build.</p>
+      </div>
+    </section>
+
+    <section class="section" id="permissions" aria-labelledby="permissions-h">
+      <p class="section-kicker">Access</p>
+      <h2 id="permissions-h">Permissions</h2>
+      <p>Everything is read-only apart from the collectors' own tables. Each lane needs only the access listed here.</p>
+      <div class="table-wrap">
+        <table class="wrap-head">
+          <thead><tr><th scope="col">Area</th><th scope="col">Identity</th><th scope="col">Permission</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Inventory (lane A)</th><td>Signed-in user</td><td>Power Platform Administrator, Global Reader or AI Administrator. Without one of these roles, Resource Graph silently returns partial results.</td></tr>
+            <tr><th scope="row">Foundry projects</th><td>Signed-in user</td><td>Reader on each subscription, or at the Tenant Root Group. Granting it at the root may first need a Global Administrator to <a href="https://learn.microsoft.com/azure/role-based-access-control/elevate-access-global-admin">elevate access</a>.</td></tr>
+            <tr><th scope="row">Names (lane B)</th><td>Signed-in user</td><td>A Dataverse security role that can read <code>systemuser</code> in the reporting environment</td></tr>
+            <tr><th scope="row">Interactions (lane C)</th><td>App registration</td><td><code>AuditLogsQuery.Read.All</code> (application) with admin consent; <code>AuditLog.Read.All</code> isn't enough. Unified audit logging must be on, and history starts from when it was turned on. Without consent, the API returns 401.</td></tr>
+            <tr><th scope="row">SharePoint agents (lane E)</th><td>App registration</td><td>The same permission, so reuse lane C's app</td></tr>
+            <tr><th scope="row">Knowledge sources (lane D)</th><td>App registration</td><td>No API permissions. An application user in each environment, with System Administrator (see <a href="#collectors">Collectors</a>).</td></tr>
+            <tr><th scope="row">Power BI</th><td>Report owner</td><td><a href="https://learn.microsoft.com/power-bi/fundamentals/service-features-license-type">Power BI Pro, Premium Per User or a Fabric capacity</a>, plus organisational credentials for the three data sources</td></tr>
+            <tr><th scope="row">Shadow AI (lane F)</th><td>Signed-in user</td><td>Security Reader or an advanced hunting role, on a tenant with Defender for Endpoint</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>What it can't do</h3>
+      <p>It can't create, edit, turn off, delete or run agents, and it doesn't read prompts or responses. The only writes are the collectors' rows in your own Dataverse. The exception is lane D's optional provisioning flow, which adds an application user with System Administrator to each environment.</p>
+      <h3>Suggested order</h3>
+      <p>Each step lights up more of the report, so you can start small:</p>
+      <ol class="steps">
+        <li><span class="step-title">Power Platform Administrator</span> Inventory, configuration and risk pages.</li>
+        <li><span class="step-title">Subscription Reader</span> Foundry projects.</li>
+        <li><span class="step-title"><code>systemuser</code> read</span> Creator and owner names.</li>
+        <li><span class="step-title">Audit app</span> Interactions, usage and SharePoint agents.</li>
+        <li><span class="step-title">Knowledge-sweep app</span> Named knowledge sources.</li>
+        <li><span class="step-title">Security Reader (optional)</span> Shadow AI.</li>
+      </ol>
+    </section>
+
+    <section class="section" id="limitations" aria-labelledby="limitations-h">
+      <p class="section-kicker">Before you build</p>
+      <h2 id="limitations-h">Limitations and upkeep</h2>
+      <div class="callout callout-warning" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>Plan for upkeep</p>
+        <p>This is a custom build, so it needs an owner in your organisation: someone to watch the flows, rotate credentials, repair breakages when APIs change and answer questions about the numbers. Microsoft doesn't support it.</p>
+      </div>
+      <ul>
+        <li><strong>Preview and beta APIs.</strong> <code>PowerPlatformResources</code> in Azure Resource Graph is new and lightly documented, and this build called the audit log query API on the Microsoft Graph beta endpoint. Either can change without notice.</li>
+        <li><strong>Schema drift.</strong> New properties, renamed values and new Copilot surfaces all need model changes.</li>
+        <li><strong>Audit retention and lag.</strong> Usage history is limited by your audit retention, and records can arrive up to about a day late.</li>
+        <li><strong>Credential rotation.</strong> Client secrets expire. A lapsed secret stops the collectors quietly unless you alert on the run log.</li>
+        <li><strong>Coverage gaps.</strong> Some agents can't be seen at all; see <a href="#coverage">Coverage</a>.</li>
+        <li><strong>Heuristic risk.</strong> The score ranks agents for review and is no more than that; see <a href="#origin-risk">Origin and risk</a>.</li>
+        <li><strong>Shadow AI is a floor.</strong> Only managed, onboarded devices are covered; see <a href="#shadow-ai">Shadow AI</a>.</li>
+        <li><strong>No support.</strong> It isn't a Microsoft product, so there's no support channel, service level or roadmap.</li>
+        <li><strong>Agent Builder drafts don't join.</strong> Usage can't be linked to an agent until it's published.</li>
+        <li><strong>Agents inside Foundry projects aren't counted.</strong> Only the projects are.</li>
+        <li><strong>Counts drift.</strong> Inventory, audit and Defender data refresh at different times, so totals on different pages can differ slightly. The screenshots show one tenant at one point in time and are indicative only.</li>
+      </ul>
+    </section>
+
+    <section class="section" id="related" aria-labelledby="related-h">
+      <p class="section-kicker">See also</p>
+      <h2 id="related-h">Related resources</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3><a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a></h3>
+          <p>The lane C collector, published on its own. It ships managed and unmanaged Power Platform packages, with an <a href="https://ryanbowie.github.io/copilot-interaction-logging/">installation guide</a> that covers the secret-handling decision and the environment variables.</p>
+        </div>
+        <div class="card">
+          <h3><a href="https://learn.microsoft.com/microsoft-agent-365/overview">Microsoft Agent 365</a></h3>
+          <p>Microsoft's offering for observing, governing and securing agents across your organisation, delivered and maintained as a service. If you have it, start there.</p>
+        </div>
+      </div>
+      <h3>Agent platforms</h3>
+      <ul class="link-list">
+        <li><a href="https://learn.microsoft.com/microsoft-copilot-studio/fundamentals-what-is-copilot-studio">Microsoft Copilot Studio</a></li>
+        <li><a href="https://learn.microsoft.com/microsoft-365/copilot/extensibility/agent-builder">Microsoft 365 Copilot Agent Builder</a></li>
+        <li><a href="https://learn.microsoft.com/sharepoint/get-started-sharepoint-agents">SharePoint agents</a></li>
+        <li><a href="https://learn.microsoft.com/azure/foundry/what-is-foundry">Microsoft Foundry</a></li>
+        <li><a href="https://learn.microsoft.com/entra/agent-id/what-is-microsoft-entra-agent-id">Microsoft Entra Agent ID</a></li>
+      </ul>
+      <h3>Power BI and Power Query</h3>
+      <ul class="link-list">
+        <li><a href="https://learn.microsoft.com/power-query/connectors/azure-resource-graph">Azure Resource Graph connector</a></li>
+        <li><a href="https://learn.microsoft.com/power-query/connectors/dataverse">Dataverse connector</a></li>
+        <li><a href="https://learn.microsoft.com/power-query/connectors/odata-feed">OData feed connector</a></li>
+        <li><a href="https://learn.microsoft.com/power-query/connectors/web/web">Web connector</a></li>
+        <li><a href="https://learn.microsoft.com/power-bi/connect-data/refresh-data#refresh-and-dynamic-data-sources">Refresh and dynamic data sources</a></li>
+        <li><a href="https://learn.microsoft.com/power-query/privacy-levels">Privacy levels</a></li>
+        <li><a href="https://learn.microsoft.com/power-bi/connect-data/refresh-scheduled-refresh">Configure scheduled refresh</a></li>
+      </ul>
+      <h3>Sources and permissions</h3>
+      <ul class="link-list">
+        <li><a href="https://learn.microsoft.com/azure/governance/resource-graph/overview">Azure Resource Graph overview</a></li>
+        <li><a href="https://learn.microsoft.com/azure/role-based-access-control/elevate-access-global-admin">Elevate access to manage all Azure subscriptions</a></li>
+        <li><a href="https://learn.microsoft.com/azure/governance/management-groups/overview">Azure management groups</a></li>
+        <li><a href="https://learn.microsoft.com/purview/audit-copilot">Audit logs for Copilot and AI applications</a></li>
+        <li><a href="https://learn.microsoft.com/graph/api/security-auditcoreroot-post-auditlogqueries?view=graph-rest-1.0">Create an audit log query (Microsoft Graph)</a></li>
+        <li><a href="https://learn.microsoft.com/defender-xdr/api-advanced-hunting">Defender advanced hunting API</a></li>
+        <li><a href="https://learn.microsoft.com/defender-endpoint/api/api-power-bi">Defender for Endpoint with Power BI</a></li>
+        <li><a href="https://learn.microsoft.com/power-platform/admin/manage-application-users">Manage application users</a></li>
+        <li><a href="https://learn.microsoft.com/power-platform/admin/powerplatform-api-create-service-principal">Power Platform API service principal</a></li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<dialog id="lightbox" class="lightbox" aria-labelledby="lightbox-caption"><div class="lightbox-inner"><button type="button" class="btn btn-sm lightbox-close">Close</button><img alt=""><p id="lightbox-caption"></p></div></dialog>
+
+<footer class="site-footer">
+  <div class="inner">
+    <p>Custom Agent Reporting – Architecture · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture">Repository</a> · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture/blob/main/LICENSE">MIT licence</a> · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture#readme">README</a> · <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a></p>
+    <p>Provided <strong>as is</strong>, without warranty of any kind. You are responsible for assessing whether it is appropriate for your organisation, and for building, operating and securing any implementation.</p>
+    <p>Microsoft, Microsoft 365, Microsoft 365 Copilot, Microsoft Agent 365, Copilot, Copilot Studio, Power Platform, Power Automate, Power BI, Dataverse, Azure, Azure Resource Graph, Microsoft Foundry, Entra, Purview and Defender are trademarks of the Microsoft group of companies. This project is not affiliated with or endorsed by Microsoft.</p>
+  </div>
+</footer>
+<div id="sr-status" class="visually-hidden" aria-live="polite"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ } },
+    del(k) { try { localStorage.removeItem(k); } catch (e) { /* storage unavailable */ } },
+    json(k) { try { return JSON.parse(this.get(k)); } catch (e) { return null; } }
+  };
+  const srStatus = $("#sr-status");
+  let srTimer;
+  const announce = (text) => {
+    if (!srStatus) return;
+    srStatus.textContent = "";
+    clearTimeout(srTimer);
+    srTimer = setTimeout(() => { srStatus.textContent = text; }, 60);
+  };
+  const reduceMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  $$("[data-jsonly]").forEach((el) => el.removeAttribute("hidden"));
+
+  /* Tables: label each cell with its column header so narrow screens can show rows as cards */
+  const stackTable = (table) => {
+    if (!table || table.hasAttribute("data-nostack")) return;
+    const heads = $$("thead th", table).map((th) => th.textContent.replace(/\s+/g, " ").trim());
+    table.setAttribute("role", "table");
+    $$("thead, tbody", table).forEach((g) => g.setAttribute("role", "rowgroup"));
+    $$("tr", table).forEach((tr) => {
+      tr.setAttribute("role", "row");
+      const inHead = tr.parentElement.tagName === "THEAD";
+      Array.from(tr.children).forEach((cell, i) => {
+        cell.setAttribute("role", inHead ? "columnheader" : cell.tagName === "TH" ? "rowheader" : "cell");
+        if (!inHead && i > 0 && heads[i]) cell.setAttribute("data-label", heads[i]);
+      });
+    });
+    table.classList.add("stack");
+  };
+  $$(".table-wrap > table").forEach(stackTable);
+
+  /* Theme */
+  const root = document.documentElement;
+  const themeBtn = $("#theme-toggle");
+  const syncThemeLabel = () => {
+    if (!themeBtn) return;
+    const label = root.getAttribute("data-theme") === "dark" ? "Switch to light theme" : "Switch to dark theme";
+    themeBtn.setAttribute("aria-label", label);
+    themeBtn.setAttribute("title", label);
+  };
+  if (themeBtn) themeBtn.addEventListener("click", () => {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    store.set("car-theme", next);
+    syncThemeLabel();
+  });
+  syncThemeLabel();
+  if (window.matchMedia && !new URLSearchParams(location.search).has("scoutTheme")) {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onScheme = (e) => {
+      const saved = store.get("car-theme");
+      if (saved === "light" || saved === "dark") return;
+      root.setAttribute("data-theme", e.matches ? "dark" : "light");
+      syncThemeLabel();
+    };
+    if (mq.addEventListener) mq.addEventListener("change", onScheme); else if (mq.addListener) mq.addListener(onScheme);
+  }
+
+  /* Scrollspy for the side contents and the chip bar */
+  const sections = $$("main section[id]");
+  const tocLinks = $$(".toc a[href^='#']");
+  const chipNav = $("#chips");
+  const chipLinks = $$("#chips a[href^='#']");
+  let activeId = null;
+  const setActive = (id) => {
+    if (id === activeId) return;
+    activeId = id;
+    tocLinks.concat(chipLinks).forEach((a) => {
+      if (a.getAttribute("href") === "#" + id) a.setAttribute("aria-current", "true");
+      else a.removeAttribute("aria-current");
+    });
+    const chip = chipLinks.find((a) => a.getAttribute("href") === "#" + id);
+    if (chip && chipNav && chipNav.scrollWidth > chipNav.clientWidth) {
+      chipNav.scrollTo({ left: Math.max(0, chip.offsetLeft - (chipNav.clientWidth - chip.offsetWidth) / 2), behavior: reduceMotion() ? "auto" : "smooth" });
+    }
+  };
+  const compute = () => {
+    if (!sections.length) return;
+    const line = window.innerHeight * 0.3;
+    let current = sections[0].id;
+    for (const s of sections) {
+      if (s.getBoundingClientRect().top <= line) current = s.id; else break;
+    }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) current = sections[sections.length - 1].id;
+    setActive(current);
+  };
+  let ticking = false;
+  const queueCompute = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { ticking = false; compute(); });
+  };
+  window.addEventListener("scroll", queueCompute, { passive: true });
+  window.addEventListener("resize", queueCompute);
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(queueCompute, { rootMargin: "0px 0px -70% 0px" });
+    sections.forEach((s) => io.observe(s));
+  }
+  compute();
+
+  /* Copy to clipboard */
+  const legacyCopy = (text) => new Promise((resolve, reject) => {
+    const prev = document.activeElement;
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-1000px";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    ta.remove();
+    if (prev && prev.focus) prev.focus();
+    if (ok) resolve(); else reject(new Error("Copy failed"));
+  });
+  const copyText = (text) => (navigator.clipboard && window.isSecureContext)
+    ? navigator.clipboard.writeText(text).catch(() => legacyCopy(text))
+    : legacyCopy(text);
+  const original = new WeakMap();
+  const timers = new WeakMap();
+  const flash = (btn, ok, okText) => {
+    if (!original.has(btn)) original.set(btn, btn.innerHTML);
+    clearTimeout(timers.get(btn));
+    btn.textContent = ok ? "Copied" : "Copy failed";
+    timers.set(btn, setTimeout(() => { btn.innerHTML = original.get(btn); }, 2000));
+    announce(ok ? (okText || "Copied to the clipboard.") : "Copy failed. Select the text and copy it manually.");
+  };
+  const copyWithFeedback = (btn, text, okText) => copyText(text).then(() => flash(btn, true, okText), () => flash(btn, false));
+  $$(".copy-btn").forEach((btn) => btn.addEventListener("click", () => {
+    const id = btn.getAttribute("data-copy-target");
+    const src = id ? document.getElementById(id) : null;
+    const text = src ? src.textContent.trim() : (btn.getAttribute("data-copy-text") || "");
+    if (text) copyWithFeedback(btn, text);
+  }));
+
+  /* Print: expand collapsed details, then restore them */
+  let reopened = [];
+  window.addEventListener("beforeprint", () => {
+    reopened = $$("details:not([open])");
+    reopened.forEach((d) => d.setAttribute("open", ""));
+  });
+  window.addEventListener("afterprint", () => {
+    reopened.forEach((d) => d.removeAttribute("open"));
+    reopened = [];
+  });
+
+  /* Screenshot lightbox */
+  const lb = $("#lightbox");
+  if (lb && typeof lb.showModal === "function") {
+    const lbImg = $("img", lb), lbCap = $("#lightbox-caption", lb);
+    let lbTrigger = null;
+    $$(".shot-btn").forEach((a) => a.addEventListener("click", (e) => {
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      const img = $("img", a), fig = a.closest("figure"), cap = fig ? $("figcaption", fig) : null;
+      lbImg.src = a.getAttribute("href"); lbImg.alt = img ? img.alt : "";
+      lbCap.textContent = cap ? cap.textContent.replace(/\s+/g, " ").trim() : "";
+      lbTrigger = a; lb.showModal(); announce("Screenshot opened. Press Escape to close.");
+    }));
+    $(".lightbox-close", lb).addEventListener("click", () => lb.close());
+    lb.addEventListener("click", (e) => { if (e.target === lb || e.target.classList.contains("lightbox-inner")) lb.close(); });
+    lb.addEventListener("close", () => { if (lbTrigger) lbTrigger.focus(); announce("Screenshot closed."); });
+  }
+})();
+</script>
+</body>
+</html>
