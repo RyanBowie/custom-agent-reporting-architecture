@@ -52,7 +52,7 @@ flowchart TB
   end
   STORE[("Reporting Dataverse · one environment<br/>collector tables · systemuser")]
   subgraph M["3 · Model and report"]
-    SM["Power BI semantic model<br/>21 tables · 166 measures"]
+    SM["Power BI semantic model<br/>21 tables · star schema"]
     RPT["Power BI report<br/>16 pages · 287 visuals"]
   end
   AUD --> LC
