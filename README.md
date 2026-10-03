@@ -79,7 +79,7 @@ flowchart TB
 
 ## Related
 
-- [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging): the lane C collector, published separately as managed and unmanaged Power Platform packages, with a guide to the secret-handling decision.
+- [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging): the lane C collector, documented separately as a build guide with no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables.
 - [Microsoft Agent 365 overview](https://learn.microsoft.com/microsoft-agent-365/overview).
 
 ## Licence and disclaimer

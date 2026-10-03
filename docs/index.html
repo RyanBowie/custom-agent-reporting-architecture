@@ -384,7 +384,7 @@ dialog.lightbox::backdrop { background: rgba(0, 0, 0, .6); }
       <p class="pill">Community project · Not a Microsoft product · Documentation only</p>
       <h1 id="page-title">Custom Agent Reporting – Architecture</h1>
       <p class="lede">A reference design for tenant-wide <strong>reporting</strong> on agents across Copilot Studio, Microsoft 365 Copilot Agent Builder, SharePoint agents and Microsoft Foundry. It is built from read-only Microsoft APIs, a few Power Automate collectors and a Power BI report.</p>
-      <p>This page documents a working build to show what a custom solution can do: the architecture, the data lanes, the lessons learned and screenshots of the result. The Power BI report file (PBIX) and the code that generates it aren't published. Interaction usage comes from a companion solution, <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>, which is published separately.</p>
+      <p>This page documents a working build to show what a custom solution can do: the architecture, the data lanes, the lessons learned and screenshots of the result. The Power BI report file (PBIX) and the code that generates it aren't published. Interaction usage comes from a companion collector, <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>, which is documented separately as a build guide.</p>
       <p>It isn't a product, and it is <strong>not a replacement for <a href="https://learn.microsoft.com/microsoft-agent-365/overview">Microsoft Agent 365</a></strong>.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="#not-a-replacement">Read this first</a>
@@ -590,8 +590,8 @@ dialog.lightbox::backdrop { background: rgba(0, 0, 0, .6); }
       <p class="section-kicker">Companion solution</p>
       <h2 id="cil-h">Interaction logging (lane C)</h2>
       <div class="callout callout-accent" role="note">
-        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Lane C is published as its own solution</p>
-        <p>The interaction collector is available separately as <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>. It ships managed and unmanaged Power Platform packages, with an <a href="https://ryanbowie.github.io/copilot-interaction-logging/">installation guide</a> that walks you through the secret-handling decision and the environment variables before you install.</p>
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Lane C has its own build guide</p>
+        <p>The interaction collector is documented separately as <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>, a documentation-only <a href="https://ryanbowie.github.io/copilot-interaction-logging/">build guide</a> with no package to install. It explains every action in both flows and why it exists, the secret-handling decision (Azure Key Vault, a plain-text environment variable or a certificate) and the environment variables, so you can build, secure and maintain the collector in your own environment.</p>
       </div>
       <p>What lane C adds to the model:</p>
       <ul>
@@ -631,13 +631,13 @@ dialog.lightbox::backdrop { background: rgba(0, 0, 0, .6); }
         <summary>Lane C – interaction collector</summary>
         <div class="details-body">
           <ol class="steps">
-            <li><span class="step-title">Credential</span> Read the client secret from Azure Key Vault or a secret-type environment variable.</li>
+            <li><span class="step-title">Credential</span> Get the app registration's credential: a client secret held in Azure Key Vault or a plain-text environment variable, or a certificate. Which one is your decision.</li>
             <li><span class="step-title">Window</span> Choose a window that ends well short of now, to allow for audit ingestion lag.</li>
             <li><span class="step-title">Query</span> POST the audit query, then poll until it completes.</li>
             <li><span class="step-title">Page and upsert</span> Page through the results and upsert each record on its audit record ID, so a re-run never duplicates rows.</li>
             <li><span class="step-title">Log</span> Write a run-log row with counts and errors.</li>
           </ol>
-          <p>Every HTTP call has a retry policy. The full, tested flow is in <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>.</p>
+          <p>Every HTTP call has a retry policy. <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a> documents every action in the tested flow and why it exists, so you can build it yourself.</p>
         </div>
       </details>
       <details>
@@ -997,7 +997,7 @@ in
       <div class="grid-2">
         <div class="card">
           <h3><a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a></h3>
-          <p>The lane C collector, published on its own. It ships managed and unmanaged Power Platform packages, with an <a href="https://ryanbowie.github.io/copilot-interaction-logging/">installation guide</a> that covers the secret-handling decision and the environment variables.</p>
+          <p>The lane C collector, documented on its own as a <a href="https://ryanbowie.github.io/copilot-interaction-logging/">build guide</a> with no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables.</p>
         </div>
         <div class="card">
           <h3><a href="https://learn.microsoft.com/microsoft-agent-365/overview">Microsoft Agent 365</a></h3>
