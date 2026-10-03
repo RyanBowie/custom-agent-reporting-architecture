@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en-GB">
+<html lang="en-GB" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <script>
   (() => {
     const param = new URLSearchParams(window.location.search).get("scoutTheme");
     const theme =
-      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      param === "light" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", theme);
   })();
 </script>
@@ -22,7 +22,7 @@
   })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark light">
 <title>Custom Agent Reporting – Architecture · Reference design for tenant-wide agent reporting</title>
 <meta name="description" content="Community reference architecture showing how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. Documentation and screenshots only; not a replacement for Microsoft Agent 365.">
 <meta property="og:title" content="Custom Agent Reporting – Architecture">
@@ -39,60 +39,108 @@
 <meta name="twitter:description" content="Community reference architecture showing how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. Documentation and screenshots only; not a replacement for Microsoft Agent 365.">
 <meta name="twitter:image" content="https://ryanbowie.github.io/custom-agent-reporting-architecture/assets/og.png">
 <!-- dl-meta:end -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2028%2028'%3E%3Crect%20width='28'%20height='28'%20rx='7'%20fill='%23b11f4b'/%3E%3Cpath%20d='M8%2020v-6M14%2020V8M20%2020v-9'%20fill='none'%20stroke='%23fff'%20stroke-width='2.5'%20stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2028%2028'%3E%3Crect%20width='28'%20height='28'%20rx='7'%20fill='%237653ae'/%3E%3Cpath%20d='M8%2020v-6M14%2020V8M20%2020v-9'%20fill='none'%20stroke='%23fff'%20stroke-width='2.5'%20stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root {
   color-scheme: light;
-  --cp-bg: #f7f4ef;
-  --cp-bg-elevated: #fcfbf8;
+  --cp-bg: #f2f2f8;
+  --cp-bg-elevated: #f8f7fc;
   --cp-surface: #ffffff;
-  --cp-surface-soft: #f5f5f5;
-  --cp-border: #dedede;
-  --cp-border-strong: #919191;
-  --cp-text: #242424;
-  --cp-text-muted: #5c5c5c;
-  --cp-text-soft: #6f6f6f;
-  --cp-accent: #b11f4b;
-  --cp-accent-hover: #9a1a41;
-  --cp-accent-soft: rgba(177, 31, 75, 0.08);
+  --cp-surface-soft: #f2f2f8;
+  --cp-border: #e3dfed;
+  --cp-border-strong: #9285aa;
+  --cp-text: #102631;
+  --cp-text-muted: #52637a;
+  --cp-text-soft: #667287;
+  --cp-accent: #7653ae;
+  --cp-accent-hover: #58378b;
+  --cp-accent-soft: #eee8f7;
   --cp-accent-fg: #ffffff;
-  --cp-success: #16a34a;
-  --cp-danger: #dc2626;
-  --cp-warning: #f59e0b;
-  --cp-link: #0078d4;
+  --cp-success: #207346;
+  --cp-danger: #b4233e;
+  --cp-warning: #8c6208;
+  --cp-link: #066bc7;
   --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
   --cp-overlay: rgba(255, 255, 255, 0.8);
   --cp-panel: rgba(255, 255, 255, 0.86);
   --cp-panel-strong: rgba(255, 255, 255, 0.96);
   --cp-sheen: rgba(255, 255, 255, 0.55);
-  --cp-highlight: rgba(177, 31, 75, 0.12);
+  --cp-highlight: rgba(118, 83, 174, 0.12);
+  --cp-chart-blue: #0877dd;
+  --cp-chart-indigo: #5364ba;
+  --cp-chart-purple: #7653ae;
+  --cp-chart-violet: #9651bb;
+  --cp-chart-magenta: #b535c3;
+  --cp-transparent: transparent;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  --cp-bg: #3d3b3a;
-  --cp-bg-elevated: #343231;
-  --cp-surface: #292929;
-  --cp-surface-soft: #2e2e2e;
-  --cp-border: #474747;
-  --cp-border-strong: #5f5f5f;
-  --cp-text: #dedede;
-  --cp-text-muted: #919191;
-  --cp-text-soft: #b0b0b0;
-  --cp-accent: #fd8ea1;
-  --cp-accent-hover: #fb7b91;
-  --cp-accent-soft: rgba(253, 142, 161, 0.14);
-  --cp-accent-fg: #1a1a1a;
+  --cp-bg: #171717;
+  --cp-bg-elevated: #222222;
+  --cp-surface: #1f1f1f;
+  --cp-surface-soft: #262626;
+  --cp-border: #3b3b3b;
+  --cp-border-strong: #858585;
+  --cp-text: #f2f2f2;
+  --cp-text-muted: #bdbdbd;
+  --cp-text-soft: #aaaaaa;
+  --cp-accent: #c3a0ef;
+  --cp-accent-hover: #debeff;
+  --cp-accent-soft: #2b2b2b;
+  --cp-accent-fg: #181818;
   --cp-success: #4ade80;
   --cp-danger: #f87171;
   --cp-warning: #fbbf24;
-  --cp-link: #4da6ff;
+  --cp-link: #80baff;
   --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
-  --cp-overlay: rgba(41, 41, 41, 0.88);
-  --cp-panel: rgba(41, 41, 41, 0.72);
-  --cp-panel-strong: rgba(41, 41, 41, 0.96);
+  --cp-overlay: rgba(31, 31, 31, 0.88);
+  --cp-panel: rgba(31, 31, 31, 0.72);
+  --cp-panel-strong: rgba(31, 31, 31, 0.96);
   --cp-sheen: rgba(255, 255, 255, 0.04);
-  --cp-highlight: rgba(253, 142, 161, 0.12);
+  --cp-highlight: rgba(195, 160, 239, 0.12);
+  --cp-chart-blue: #69aeff;
+  --cp-chart-indigo: #98a5ff;
+  --cp-chart-purple: #bc98ed;
+  --cp-chart-violet: #d097ee;
+  --cp-chart-magenta: #ed8fea;
+  --cp-transparent: transparent;
+}
+
+/* Print on paper colours whichever theme is showing. */
+@media print {
+  html[data-theme="dark"] {
+    color-scheme: light;
+    --cp-bg: #f2f2f8;
+    --cp-bg-elevated: #f8f7fc;
+    --cp-surface: #ffffff;
+    --cp-surface-soft: #f2f2f8;
+    --cp-border: #e3dfed;
+    --cp-border-strong: #9285aa;
+    --cp-text: #102631;
+    --cp-text-muted: #52637a;
+    --cp-text-soft: #667287;
+    --cp-accent: #7653ae;
+    --cp-accent-hover: #58378b;
+    --cp-accent-soft: #eee8f7;
+    --cp-accent-fg: #ffffff;
+    --cp-success: #207346;
+    --cp-danger: #b4233e;
+    --cp-warning: #8c6208;
+    --cp-link: #066bc7;
+    --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+    --cp-overlay: rgba(255, 255, 255, 0.8);
+    --cp-panel: rgba(255, 255, 255, 0.86);
+    --cp-panel-strong: rgba(255, 255, 255, 0.96);
+    --cp-sheen: rgba(255, 255, 255, 0.55);
+    --cp-highlight: rgba(118, 83, 174, 0.12);
+    --cp-chart-blue: #0877dd;
+    --cp-chart-indigo: #5364ba;
+    --cp-chart-purple: #7653ae;
+    --cp-chart-violet: #9651bb;
+    --cp-chart-magenta: #b535c3;
+    --cp-transparent: transparent;
+  }
 }
 
 :root {
@@ -235,6 +283,10 @@ tbody tr:last-child > * { border-bottom: 0; }
 tr.is-relevant > * { background: var(--cp-highlight); }
 .nowrap { white-space: nowrap; }
 table.wrap-head thead th { white-space: normal; }
+.lin-sub { display: block; font-size: 0.75rem; font-weight: 400; color: var(--cp-text-muted); }
+.lin-matrix td.lin-mark { text-align: center; color: var(--cp-accent); font-size: 1.05rem; }
+.lin-matrix td.lin-via { color: var(--cp-text-muted); }
+@media (max-width: 640px) { .lin-matrix td.lin-mark { text-align: left; } }
 /* Narrow screens: the script labels each cell and adds .stack, so each row becomes a card */
 @media (max-width: 640px) {
   table.stack, table.stack tbody, table.stack tr, table.stack th, table.stack td { display: block; }
@@ -328,7 +380,11 @@ dialog.lightbox::backdrop { background: rgba(0, 0, 0, .6); }
 .hero { position: relative; isolation: isolate; margin-top: 20px; padding: 48px 28px 32px; }
 .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border: 1px solid var(--cp-border); border-radius: var(--radius-card); background-color: var(--cp-bg-elevated); background-image: radial-gradient(circle, color-mix(in srgb, var(--cp-border-strong) 45%, transparent) 1px, transparent 1.6px); background-size: 20px 20px; -webkit-mask-image: linear-gradient(to bottom, var(--cp-text) 60%, transparent); mask-image: linear-gradient(to bottom, var(--cp-text) 60%, transparent); }
 .hero::after { content: ""; position: absolute; top: -5px; left: -5px; right: -5px; height: 18px; z-index: -1; pointer-events: none; background: linear-gradient(var(--cp-accent), var(--cp-accent)) left top / 18px 2px no-repeat, linear-gradient(var(--cp-accent), var(--cp-accent)) left top / 2px 18px no-repeat, linear-gradient(var(--cp-accent), var(--cp-accent)) right top / 18px 2px no-repeat, linear-gradient(var(--cp-accent), var(--cp-accent)) right top / 2px 18px no-repeat; }
-.hero h1::after { content: ""; display: block; width: 64px; height: 4px; margin-top: 14px; border-radius: 2px; background: var(--cp-accent); transform-origin: left center; animation: dl-grow 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.hero h1 { width: fit-content; max-width: 100%; color: var(--cp-chart-blue); }
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .hero h1 { background: linear-gradient(105deg, var(--cp-chart-blue), var(--cp-chart-purple) 56%, var(--cp-chart-magenta)); -webkit-background-clip: text; background-clip: text; color: var(--cp-transparent); -webkit-text-fill-color: var(--cp-transparent); }
+}
+.hero h1::after { content: ""; display: block; width: 64px; height: 4px; margin-top: 14px; border-radius: 2px; background: linear-gradient(90deg, var(--cp-chart-blue), var(--cp-chart-purple), var(--cp-chart-magenta)); transform-origin: left center; animation: dl-grow 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @keyframes dl-grow { from { transform: scaleX(0); } }
 
 /* Signal diagram in the hero */
@@ -373,7 +429,7 @@ main { counter-reset: dlch; }
 .section-kicker::before { counter-increment: dlch; content: counter(dlch, decimal-leading-zero) " · "; content: counter(dlch, decimal-leading-zero) " · " / ""; color: var(--cp-text-soft); font-family: var(--mono); }
 
 /* Reading progress and reveal on scroll (motion only when allowed; see the script) */
-#dl-progress { position: fixed; z-index: 60; top: 0; left: 0; width: 100%; height: 3px; background: var(--cp-accent); transform: scaleX(var(--dl-p, 0)); transform-origin: 0 50%; pointer-events: none; }
+#dl-progress { position: fixed; z-index: 60; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, var(--cp-chart-blue), var(--cp-chart-purple), var(--cp-chart-magenta)); transform: scaleX(var(--dl-p, 0)); transform-origin: 0 50%; pointer-events: none; }
 html.dl-motion .dl-reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
 html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
 
@@ -396,7 +452,13 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
 .dl-here { align-self: flex-start; margin-top: auto; padding: 2px 10px; border-radius: 999px; background: var(--cp-accent); color: var(--cp-accent-fg); font: 700 0.7rem/1.6 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
 
 @media (max-width: 600px) { .hero { padding: 36px 14px 20px; } .dl-series { padding: 18px 14px; } }
+@media (forced-colors: active) {
+  .hero h1 { background: none; color: CanvasText; -webkit-text-fill-color: CanvasText; }
+  .hero h1::after, #dl-progress { forced-color-adjust: none; background: Highlight; }
+}
 @media print {
+  .hero h1 { background: none; color: var(--cp-text); -webkit-text-fill-color: currentColor; }
+  .hero h1::after { background: var(--cp-accent); }
   #dl-progress, .hero::before, .hero::after, .shot-btn::before, .shot a[data-lightbox]::before, .dl-wide::before { display: none; }
   .dl-more { -webkit-mask-image: none; mask-image: none; }
   .hero { margin-top: 0; padding: 24px 0 0; }
@@ -439,6 +501,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
     <li><a href="#collectors">Collectors</a></li>
     <li><a href="#refresh">Refresh</a></li>
     <li><a href="#model">Model</a></li>
+    <li><a href="#lineage">Lineage</a></li>
     <li><a href="#origin-risk">Risk</a></li>
     <li><a href="#coverage">Coverage</a></li>
     <li><a href="#findings">Findings</a></li>
@@ -462,6 +525,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
       <li><a href="#collectors">Collector patterns</a></li>
       <li><a href="#refresh">Gateway-free refresh</a></li>
       <li><a href="#model">Semantic model</a></li>
+      <li><a href="#lineage">Which table feeds which page</a></li>
       <li><a href="#origin-risk">Origin and risk scoring</a></li>
       <li><a href="#coverage">Platform coverage</a></li>
       <li><a href="#findings">Lessons from the build</a></li>
@@ -605,11 +669,11 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
     <section class="section" id="architecture" aria-labelledby="architecture-h">
       <p class="section-kicker">How it fits together</p>
       <h2 id="architecture-h">Architecture at a glance</h2>
-      <p>Read-only Microsoft APIs feed one Power BI semantic model. Three lanes go straight into the model at refresh. The other three need a small daily collector, because Power BI can't call those APIs itself.</p>
+      <p>Read-only Microsoft APIs feed one Power BI semantic model. Three lanes go straight into the model at refresh. The other three need a small daily collector, because Power BI can't call those APIs itself. The collectors all run in one reporting environment and write their rows there, so the model needs only one Dataverse connection, however many environments the tenant has.</p>
       <div class="diagram-wrap">
       <svg viewBox="0 0 1000 630" role="img" aria-labelledby="arch-title arch-desc">
         <title id="arch-title">Custom agent reporting architecture</title>
-        <desc id="arch-desc">Three bands. Sources: Azure Resource Graph (lane A), the Purview audit log (lanes C and E), the Dataverse database in each environment (lane D) and Defender XDR (lane F). Resource Graph and Defender connect straight to the Power BI semantic model. The audit log feeds two daily Power Automate collectors, interaction logging (documented separately as Copilot Interaction Logging) and SharePoint agents, and each environment's Dataverse feeds the knowledge sweep. The collectors write to a reporting Dataverse, which also supplies user names (lane B) and connects to the model through an OData feed. The model feeds a 16-page Power BI report.</desc>
+        <desc id="arch-desc">Three bands. Sources: Azure Resource Graph (lane A), the Purview audit log (lanes C and E), the Dataverse database in each environment (lane D) and Defender XDR (lane F). Resource Graph and Defender connect straight to the Power BI semantic model. The audit log feeds two daily Power Automate collectors, interaction logging (documented separately as Copilot Interaction Logging) and SharePoint agents, and each environment's Dataverse feeds the knowledge sweep. All three collectors run in one reporting environment and write to its Dataverse, which also supplies user names (lane B) and connects to the model through a single OData feed. The model feeds a 16-page Power BI report.</desc>
         <defs><marker id="arrow-arch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-arrowhead" d="M0 0 10 5 0 10z"/></marker></defs>
         <rect class="d-band" x="10" y="10" width="980" height="140" rx="12"/>
         <text class="d-band-title" x="56" y="30">1 · SOURCES — READ-ONLY MICROSOFT APIS</text>
@@ -634,7 +698,8 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
         <text class="d-text" x="816" y="104">Device* tables</text>
         <text class="d-text" x="816" y="120">Lane F</text>
         <rect class="d-band" x="10" y="190" width="980" height="190" rx="12"/>
-        <text class="d-band-title" x="56" y="210">2 · COLLECTORS</text>
+        <text class="d-band-title" x="56" y="210">2 · COLLECTORS — POWER AUTOMATE</text>
+        <text class="d-band-title" x="948" y="210" text-anchor="end">IN ONE REPORTING ENVIRONMENT</text>
         <path class="d-arrow" d="M360 132V172H304V220" marker-end="url(#arrow-arch)"/>
         <path class="d-arrow" d="M444 132V172H500V220" marker-end="url(#arrow-arch)"/>
         <path class="d-arrow" d="M640 132V172H696V220" marker-end="url(#arrow-arch)"/>
@@ -649,12 +714,12 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
         <rect class="d-box" x="608" y="222" width="176" height="80" rx="10"/>
         <text class="d-title" x="620" y="246">Knowledge sweep</text>
         <text class="d-text" x="620" y="266">Power Automate · daily</text>
-        <text class="d-text" x="620" y="282">Lane D</text>
+        <text class="d-text" x="620" y="282">Lane D · all environments</text>
         <path class="d-arrow" d="M304 302V318" marker-end="url(#arrow-arch)"/>
         <path class="d-arrow" d="M500 302V318" marker-end="url(#arrow-arch)"/>
         <path class="d-arrow" d="M696 302V318" marker-end="url(#arrow-arch)"/>
         <rect class="d-store" x="216" y="320" width="568" height="44" rx="8"/>
-        <text class="d-store-text" x="500" y="347" text-anchor="middle">Reporting Dataverse — collector tables (C, D, E) · systemuser (B)</text>
+        <text class="d-store-text" x="500" y="347" text-anchor="middle">One reporting Dataverse — collector tables (C, D, E) · systemuser (B)</text>
         <rect class="d-band" x="10" y="400" width="980" height="220" rx="12"/>
         <text class="d-band-title" x="56" y="420">3 · MODEL AND REPORT</text>
         <path class="d-arrow" d="M40 132V430" marker-end="url(#arrow-arch)"/>
@@ -664,7 +729,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
         <text class="d-label" x="950" y="290" text-anchor="end">Web connector</text>
         <text class="d-label" x="950" y="304" text-anchor="end">Lane F</text>
         <path class="d-arrow" d="M500 364V430" marker-end="url(#arrow-arch)"/>
-        <text class="d-label" x="510" y="394">Dataverse (OData feed)</text>
+        <text class="d-label" x="510" y="394">Dataverse · one OData feed</text>
         <rect class="d-box" x="20" y="432" width="960" height="72" rx="10"/>
         <text class="d-title" x="56" y="456">Power BI semantic model</text>
         <text class="d-text" x="56" y="476">21 tables · 166 measures · star schema · scheduled refresh · no gateway</text>
@@ -676,11 +741,41 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
       </div>
       <ul>
         <li><strong>Read-only.</strong> It never changes an agent. The only writes are the collectors' rows in your own Dataverse, plus lane D's application user in each environment if you use its provisioning flow.</li>
-        <li><strong>Three connectors.</strong> Azure Resource Graph, Dataverse (as an OData feed) and the Web connector for Defender advanced hunting. The model never calls Purview or Power Automate.</li>
+        <li><strong>Three connectors.</strong> Azure Resource Graph, Dataverse (one OData feed, to the reporting environment) and the Web connector for Defender advanced hunting. The model never calls Purview or Power Automate.</li>
         <li><strong>No gateway.</strong> Every source refreshes in the Power BI service; see <a href="#refresh">Refresh without a gateway</a>.</li>
         <li><strong>Dataverse is a convenience.</strong> Azure SQL Database or a Fabric lakehouse would work as the collector store too. Only the collectors' write step and the model's data-access function would change.</li>
         <li><strong>Data first, generated from code.</strong> The pages were designed around what the APIs actually return, and the semantic model and report are generated from code, so a rebuild is repeatable.</li>
       </ul>
+      <div class="callout callout-info" role="note">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>One reporting environment, one Dataverse connection</p>
+        <p>Every Power Platform environment has its own Dataverse. The model could loop <code>OData.Feed</code> over them, but a URL built at refresh is a dynamic data source that the service won't refresh, and each environment would need its own credential. So the lane D flow runs in one reporting environment, sweeps every environment in its manifest and copies the rows there. Lanes C and E write to the same environment, and lane B reads its <code>systemuser</code> table, so the model holds a single Dataverse connection with a static URL.</p>
+        <p>A new environment is picked up by the next sweep once it has the application user (the optional provisioning flow adds it), with no change to the model.</p>
+      </div>
+      <figure class="dl-signal">
+        <figcaption><span><b>Fan-in</b> · Lane D</span><span>Every environment → one reporting Dataverse → one connection</span></figcaption>
+        <div class="dl-scroll" tabindex="0" role="region" aria-label="Fan-in diagram (scrolls sideways on small screens)">
+          <svg viewBox="0 0 960 236" role="img" aria-labelledby="dl-fan-t dl-fan-d">
+            <title id="dl-fan-t">Every environment, one reporting environment</title>
+            <desc id="dl-fan-d">Each environment has its own Dataverse. One lane D flow, running in the reporting environment, reads botcomponents from every environment, 20 at a time, and copies the rows into the reporting environment's Dataverse. Lanes C and E write there too, and lane B reads its systemuser table. The semantic model connects to that one Dataverse with a single static URL, so a new environment needs no change to the model.</desc>
+            <text class="dl-note" x="10" y="16">EVERY ENVIRONMENT</text>
+            <text class="dl-note" x="270" y="16">ONE FLOW</text>
+            <text class="dl-note" x="520" y="16">ONE REPORTING ENVIRONMENT</text>
+            <text class="dl-note" x="780" y="16">ONE CONNECTION</text>
+            <path class="dl-path" d="M210 48 C240 48 240 108 270 108"/>
+            <path class="dl-path" d="M210 108 H270"/>
+            <path class="dl-path" d="M210 168 C240 168 240 108 270 108"/>
+            <path class="dl-path" d="M470 108 H520"/>
+            <path class="dl-path dl-hot" d="M730 108 H780"/>
+            <g class="dl-node"><rect x="10" y="28" width="200" height="40" rx="8"/><text x="24" y="45">Environment 1</text><text class="dl-sub" x="24" y="60">Dataverse · botcomponents</text></g>
+            <g class="dl-node"><rect x="10" y="88" width="200" height="40" rx="8"/><text x="24" y="105">Environment 2</text><text class="dl-sub" x="24" y="120">Dataverse · botcomponents</text></g>
+            <g class="dl-node"><rect x="10" y="148" width="200" height="40" rx="8"/><text x="24" y="165">Environment n</text><text class="dl-sub" x="24" y="180">Dataverse · botcomponents</text></g>
+            <g class="dl-node"><rect x="270" y="68" width="200" height="80" rx="10"/><text x="370" y="98" text-anchor="middle">Lane D sweep</text><text class="dl-sub" x="370" y="116" text-anchor="middle">Power Automate · daily</text><text class="dl-sub" x="370" y="132" text-anchor="middle">20 environments at a time</text></g>
+            <g class="dl-node dl-hot"><rect x="520" y="68" width="210" height="80" rx="10"/><text x="625" y="98" text-anchor="middle">Reporting Dataverse</text><text class="dl-sub" x="625" y="116" text-anchor="middle">lanes C and E write here too</text><text class="dl-sub" x="625" y="132" text-anchor="middle">systemuser for lane B</text></g>
+            <g class="dl-node"><rect x="780" y="68" width="170" height="80" rx="10"/><text x="865" y="98" text-anchor="middle">Semantic model</text><text class="dl-sub" x="865" y="116" text-anchor="middle">1 Dataverse connection</text><text class="dl-sub" x="865" y="132" text-anchor="middle">static URL · no gateway</text></g>
+            <text class="dl-note dl-hot" x="10" y="224">A NEW ENVIRONMENT NEEDS NO CHANGE TO THE MODEL</text>
+          </svg>
+        </div>
+      </figure>
     </section>
 
     <section class="section" id="lanes" aria-labelledby="lanes-h">
@@ -694,7 +789,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
             <tr><th scope="row">A – agent inventory</th><td>Copilot Studio and Agent Builder agents, Foundry projects, agent flows and environments</td><td>Power BI queries Azure Resource Graph at refresh</td><td>Azure Resource Graph connector</td></tr>
             <tr><th scope="row">B – owner and creator identity</th><td>Display names for creators and owners</td><td>Dataverse at refresh</td><td><code>systemuser</code> in the reporting environment</td></tr>
             <tr><th scope="row">C – interaction telemetry</th><td>Per-turn usage from the Purview audit log, including SharePoint agents</td>      <td>A daily flow writes to Dataverse, built with <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a> (see <a href="#cil">lane C</a>)</td><td>Dataverse</td></tr>
-            <tr><th scope="row">D – named knowledge sources</th><td>The sites, indexes and connectors each agent reads</td><td>A daily sweep of <code>botcomponents</code> (component type 16) in every environment</td><td>Dataverse</td></tr>
+            <tr><th scope="row">D – named knowledge sources</th><td>The sites, indexes and connectors each agent reads</td><td>A daily sweep of <code>botcomponents</code> (component type 16) in every environment, copied into the reporting environment</td><td>Dataverse</td></tr>
             <tr><th scope="row">E – SharePoint agent inventory</th><td><code>.agent</code> files: current or deleted, names, sites and URLs</td><td>A daily flow over file-operation audit records</td><td>Dataverse</td></tr>
             <tr><th scope="row">F – Shadow AI on endpoints</th><td>Unsanctioned AI desktop tools on managed devices</td><td>Defender advanced hunting at refresh</td><td>Web connector to <code>api.security.microsoft.com</code></td></tr>
           </tbody>
@@ -738,13 +833,13 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
     <section class="section" id="collectors" aria-labelledby="collectors-h">
       <p class="section-kicker">Out-of-band</p>
       <h2 id="collectors-h">Collector patterns</h2>
-      <p>Three lanes need a collector: a scheduled Power Automate flow that calls an API Power BI can't call, and writes the result to Dataverse tables that the model then reads.</p>
+      <p>Three lanes need a collector: a scheduled Power Automate flow that calls an API Power BI can't call, and writes the result to Dataverse tables in the reporting environment, which the model then reads. All three collectors run in that environment, including Copilot Interaction Logging, so their tables sit side by side.</p>
       <div class="table-wrap">
         <table class="wrap-head">
           <thead><tr><th scope="col"><span class="visually-hidden">Aspect</span></th><th scope="col">Lane C – interactions</th><th scope="col">Lane D – knowledge sources</th><th scope="col">Lane E – SharePoint agents</th></tr></thead>
           <tbody>
             <tr><th scope="row">Adds</th><td>Who used which agent, when and how often</td><td>Which site, website or index each agent reads</td><td>Which <code>.agent</code> files exist, and their state</td></tr>
-            <tr><th scope="row">Why Power BI can't read it</th><td>A POST-only, asynchronous audit API, with a token audience the Web connector can't request</td><td>One Dataverse per environment, so the endpoint would be a computed (dynamic) data source</td><td>The same asynchronous POST API, and the records need grouping</td></tr>
+            <tr><th scope="row">Why Power BI can't read it</th><td>A POST-only, asynchronous audit API, with a token audience the Web connector can't request</td><td>One Dataverse per environment, so reading them all would need a computed (dynamic) data source and a credential for each environment</td><td>The same asynchronous POST API, and the records need grouping</td></tr>
             <tr><th scope="row">Permissions</th><td><code>AuditLogsQuery.Read.All</code> (application), with admin consent</td><td>No API permissions; an application user in each environment</td><td>The same permission, so it can reuse lane C's app; no <code>Sites.Read.All</code></td></tr>
             <tr><th scope="row">Pages empty without it</th><td>Copilot interactions and usage uplift</td><td>Knowledge sources</td><td>SharePoint agents inventory</td></tr>
           </tbody>
@@ -773,7 +868,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
             <li>Build a key-to-row-ID index of existing rows. The Dataverse connector only updates by primary-key GUID and refuses alternate keys.</li>
             <li>Sweep environments 20 at a time, with one GET per environment on <code>botcomponents</code>, expanding <code>parentbotid</code>.</li>
             <li>Extract each source's name, kind and locator from the component YAML with a single Select action.</li>
-            <li>Write rows 8 at a time.</li>
+            <li>Write rows 8 at a time to the reporting environment's Dataverse.</li>
             <li>Tombstone missing sources only after a clean run. The guard re-reads error and fresh-row counts from Dataverse, because counters updated inside concurrent loops aren't reliable.</li>
             <li>Close the run log.</li>
           </ol>
@@ -825,7 +920,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
           <thead><tr><th scope="col">Source</th><th scope="col">Connector</th><th scope="col">Why this one</th></tr></thead>
           <tbody>
             <tr><th scope="row">Azure Resource Graph</th><td><code>AzureResourceGraph.Query</code></td><td>The Web connector can't send an authenticated POST or request the Azure Resource Manager audience, <code>https://management.core.windows.net</code></td></tr>
-            <tr><th scope="row">Dataverse</th><td><code>OData.Feed</code></td><td>The same audience problem rules out the Web connector</td></tr>
+            <tr><th scope="row">Dataverse</th><td><code>OData.Feed</code></td><td>The same audience problem rules out the Web connector. One static URL, to the reporting environment, covers lanes B to E</td></tr>
             <tr><th scope="row">Defender advanced hunting</th><td><code>Web.Contents</code></td><td>A plain GET against a fixed host</td></tr>
           </tbody>
         </table>
@@ -860,30 +955,92 @@ in
             <tr><th scope="row">Inventory</th><td>Agent (one row per agent per environment, across all platforms), Environment, AgentFlow, AzureAIResource, SharePointAgent</td></tr>
             <tr><th scope="row">Configuration</th><td>AgentConnector (with an <code>IsMcpServer</code> flag), AgentKnowledge, KnowledgeSource</td></tr>
             <tr><th scope="row">People</th><td>User</td></tr>
-            <tr><th scope="row">Usage</th><td>Interaction (one row per turn), CopilotSurface, TelemetryCoverage. Loaded from the Dataverse tables that <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a> writes (lane C).</td></tr>
+            <tr><th scope="row">Usage</th><td>Interaction (one row per turn) and CopilotSurface, loaded from the interactions table that <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a> writes (lane C).</td></tr>
             <tr><th scope="row">Risk</th><td>RiskFactor, RiskDetail</td></tr>
-            <tr><th scope="row">Coverage</th><td>ApiCoverage</td></tr>
+            <tr><th scope="row">Coverage</th><td>ApiCoverage and TelemetryCoverage: static reference tables held in the model</td></tr>
             <tr><th scope="row">Shadow AI</th><td>A watchlist-driven tool catalogue, signals and devices</td></tr>
-            <tr><th scope="row">Support</th><td>Date, Metrics, Pages</td></tr>
+            <tr><th scope="row">Support</th><td>Date, Metrics</td></tr>
           </tbody>
         </table>
       </div>
       <div class="callout callout-accent" role="note">
         <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Where the Usage tables come from</p>
-        <p>Copilot interaction usage is the one part of the model captured by <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a>, a companion build guide. Two Power Automate flows read the Purview audit log through Microsoft Graph and write metadata to three Dataverse tables, and the model reads those tables at refresh to build Interaction, CopilotSurface and TelemetryCoverage.</p>
+        <p>Copilot interaction usage is the one part of the model captured by <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a>, a companion build guide. Two Power Automate flows read the Purview audit log through Microsoft Graph and write metadata to three Dataverse tables. The model reads the interactions table at refresh to build Interaction and CopilotSurface, and the activity columns on Agent (<code>LastActivityAt</code>, <code>ActivityStatus</code>). The flow-run and error tables are for monitoring the collector.</p>
         <p>It's one example of a capture method, not a requirement. The same audit records could reach the model from the <a href="https://learn.microsoft.com/azure/azure-monitor/reference/tables/copilotactivity">Microsoft Sentinel <code>CopilotActivity</code> table</a>, the <a href="https://learn.microsoft.com/office/office-365-management-api/office-365-management-activity-api-reference">Office 365 Management Activity API</a> or a store you already run. Only the model's data-access step would change.</p>
       </div>
       <h3>Relationships</h3>
       <ul>
         <li>Agent and AgentFlow relate to Environment.</li>
-        <li>AgentConnector, AgentKnowledge and KnowledgeSource relate to Agent.</li>
-        <li>Agent relates to User twice, for the creator and the owner.</li>
+        <li>AgentConnector, AgentKnowledge, KnowledgeSource and RiskDetail relate to Agent.</li>
+        <li>Agent relates to User once, through the owner, and <code>RELATED</code> fills the owner name and UPN. The creator name is a <code>LOOKUPVALUE</code> in a calculated column, so it needs no second relationship.</li>
         <li><code>Interaction[SurfaceKey]</code> relates to CopilotSurface, and <code>Interaction[AgentKey]</code> to Agent. <code>CopilotSurface[SharePointAgentKey]</code> relates to SharePointAgent.</li>
         <li><code>Interaction[Date]</code> to Date is active. <code>Agent[CreatedDate]</code> and <code>Agent[LastUsedDate]</code> to Date are inactive and used through <a href="https://learn.microsoft.com/dax/userelationship-function-dax">USERELATIONSHIP</a>, because two active paths to Date are ambiguous and Power BI Desktop refuses to load the model.</li>
       </ul>
       <h3>Fallback labels</h3>
       <p>Every lookup has a visible fallback: <code>Unlisted: &lt;id&gt;</code>, "Unknown", "Not specified" (kept distinct from "Copilot Studio default") and "Agent no longer in inventory". A blank sorts first in most visuals and looks like a fault.</p>
     </section>
+
+<!-- lineage:start -->
+    <section class="section" id="lineage" aria-labelledby="lineage-h">
+      <p class="section-kicker">Lineage</p>
+      <h2 id="lineage-h">Which table feeds which page</h2>
+      <p>The model has 21 tables and 13 relationships, with Agent at the hub. Every Dataverse table it reads sits in one reporting environment, so it holds one Dataverse connection however many environments the tenant has. Lane C is required: the model expects the interactions table to exist. Lanes D and E are optional and load as empty tables until their collectors first run, and lane F loads empty if Defender for Endpoint isn't licensed or refuses the refresh account. The static reference tables are held in the model itself.</p>
+      <h3>The main tables, their lanes and where they come from</h3>
+      <div class="table-wrap">
+        <table class="wrap-head">
+          <thead><tr><th scope="col">Table</th><th scope="col">Lane</th><th scope="col">Holds</th><th scope="col">Comes from</th><th scope="col">Used on pages</th></tr></thead>
+          <tbody>
+          <tr><th scope="row">Agent</th><td>A</td><td>One row per agent across Copilot Studio, Agent Builder and Azure AI Foundry, with owner, activity and risk columns</td><td>Azure Resource Graph, at refresh: agents, environments, usage records and Foundry projects</td><td class="nowrap">1–7, 9–15</td></tr>
+          <tr><th scope="row">Environment</th><td>A</td><td>Power Platform environments</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">9, 13, 15</td></tr>
+          <tr><th scope="row">AgentConnector</th><td>A</td><td>One row per agent and connector, including MCP server tools</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">11</td></tr>
+          <tr><th scope="row">AgentKnowledge</th><td>A</td><td>One row per agent per knowledge-source type; for Agent Builder agents it's the only integration surface</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">12–13</td></tr>
+          <tr><th scope="row">AgentFlow</th><td>A</td><td>Autonomous agent flows and Microsoft 365 agent flows</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">14–15</td></tr>
+          <tr><th scope="row">AzureAIResource</th><td>A</td><td>Foundry accounts, hubs and projects</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">14</td></tr>
+          <tr><th scope="row">RiskDetail</th><td>A</td><td>Each risk factor that fired for each agent, with its points</td><td>Computed in the model from Agent and the RiskFactor rules</td><td class="nowrap">10</td></tr>
+          <tr><th scope="row">User</th><td>B</td><td>Display name, UPN and principal type for owners and creators</td><td>Dataverse <code>systemuser</code> in the reporting environment</td><td class="nowrap">1–6, 9–14</td></tr>
+          <tr><th scope="row">Interaction</th><td>C</td><td>One row per Copilot turn: time, user, surface, agent, thread and resources</td><td>The interactions table that <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a> writes in the reporting environment (required)</td><td class="nowrap">1–9</td></tr>
+          <tr><th scope="row">CopilotSurface</th><td>C</td><td>Every distinct app identity in the audit log, classified by surface and matched to the inventory</td><td>The same table (app identities only), matched against Agent and SharePointAgent</td><td class="nowrap">7–8</td></tr>
+          <tr><th scope="row">KnowledgeSource</th><td>D</td><td>One row per named source an agent reads: SharePoint site, public website, Graph connector or Azure AI Search index</td><td>A collector table in the reporting environment, swept daily from every environment (optional)</td><td class="nowrap">13</td></tr>
+          <tr><th scope="row">SharePointAgent</th><td>E</td><td><code>.agent</code> files: current or deleted, names, sites and URLs</td><td>A collector table in the reporting environment (optional)</td><td class="nowrap">8</td></tr>
+          <tr><th scope="row">ShadowAiSignal</th><td>F</td><td>Detections in three layers: installed, executed and network</td><td>Defender advanced hunting, through the Web connector</td><td class="nowrap">16</td></tr>
+          <tr><th scope="row">ShadowAiDevice</th><td>F</td><td>Device-level detail for each detection</td><td>Defender advanced hunting, through the Web connector</td><td class="nowrap">16</td></tr>
+          <tr><th scope="row">RiskFactor</th><td>Static</td><td>The risk rules and the points each one scores</td><td>Static table held in the model</td><td class="nowrap">10</td></tr>
+          <tr><th scope="row">ApiCoverage</th><td>Static</td><td>Results of the live-tested APIs</td><td>Static table held in the model</td><td class="nowrap">15</td></tr>
+          <tr><th scope="row">TelemetryCoverage</th><td>Static</td><td>Which monitoring signals each platform exposes, which explains gaps in usage figures</td><td>Static table held in the model</td><td class="nowrap">6, 15</td></tr>
+          <tr><th scope="row">ShadowAiCatalog</th><td>Static</td><td>The watchlist of AI tools to look for</td><td>Static table held in the model</td><td class="nowrap">16</td></tr>
+          <tr><th scope="row">Date</th><td>Model</td><td>A calendar from a start parameter to the end of next month</td><td>Generated in Power Query at refresh</td><td class="nowrap">1, 3, 6, 7, 9</td></tr>
+          <tr><th scope="row">Metrics</th><td>Model</td><td>166 measures in 12 display folders</td><td>A measure table with one placeholder row</td><td class="nowrap">All 16</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>The lanes behind each report page</h3>
+      <p>The report has 16 pages and 287 visuals. A dot means the page reads a table from that lane. A ring means it reaches the lane only through Agent columns or measures. A blank means the page doesn't use the lane.</p>
+      <div class="table-wrap">
+        <table class="wrap-head lin-matrix">
+          <thead><tr><th scope="col">Page</th><th scope="col">Visuals</th><th scope="col"><span class="visually-hidden">Lane </span>A <span class="lin-sub">Inventory</span></th><th scope="col"><span class="visually-hidden">Lane </span>B <span class="lin-sub">Identity</span></th><th scope="col"><span class="visually-hidden">Lane </span>C <span class="lin-sub">Interactions</span></th><th scope="col"><span class="visually-hidden">Lane </span>D <span class="lin-sub">Knowledge</span></th><th scope="col"><span class="visually-hidden">Lane </span>E <span class="lin-sub">SharePoint</span></th><th scope="col"><span class="visually-hidden">Lane </span>F <span class="lin-sub">Shadow AI</span></th><th scope="col"><span class="visually-hidden">Lane </span>Static <span class="lin-sub">Reference</span></th><th scope="col">Screenshot</th></tr></thead>
+          <tbody>
+          <tr><th scope="row">1. Executive overview</th><td>23</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td><a href="assets/01-executive-overview.png">View<span class="visually-hidden"> the Executive overview screenshot</span></a></td></tr>
+          <tr><th scope="row">2. All agents</th><td>17</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row">3. Agent analytics</th><td>16</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row">4. Agent inventory</th><td>17</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td><a href="assets/02-agent-inventory.png">View<span class="visually-hidden"> the Agent inventory screenshot</span></a></td></tr>
+          <tr><th scope="row">5. Creators &amp; ownership</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row">6. Usage &amp; popularity</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
+          <tr><th scope="row">7. Copilot interactions</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td><a href="assets/03-copilot-interactions.png">View<span class="visually-hidden"> the Copilot interactions screenshot</span></a></td></tr>
+          <tr><th scope="row">8. SharePoint agents</th><td>19</td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row">9. Adoption &amp; activity</th><td>20</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row">10. Governance &amp; risk</th><td>20</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td><a href="assets/04-governance-risk.png">View<span class="visually-hidden"> the Governance & risk screenshot</span></a></td></tr>
+          <tr><th scope="row">11. Tools &amp; integration</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row">12. Knowledge &amp; grounding</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><th scope="row">13. Knowledge sources</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td><a href="assets/05-knowledge-sources.png">View<span class="visually-hidden"> the Knowledge sources screenshot</span></a></td></tr>
+          <tr><th scope="row">14. Azure AI Foundry</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td><a href="assets/06-azure-ai-foundry.png">View<span class="visually-hidden"> the Azure AI Foundry screenshot</span></a></td></tr>
+          <tr><th scope="row">15. Data sources &amp; gaps</th><td>12</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
+          <tr><th scope="row">16. Shadow AI (endpoints)</th><td>14</td><td></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout callout-info" role="note"><p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Two lanes reach more pages than they appear to</p><p>Owner and creator names from lane B are calculated columns on Agent, and Agent's activity status uses the latest interaction from lane C as well as Resource Graph's last-used date. So a page that shows only Agent fields still depends on both lanes. A ring marks those pages in the matrix.</p><p>CopilotSurface is also built from lanes A and E: each app identity is matched against Agent and SharePointAgent at refresh, so interactions carry an agent name only when one of those lanes holds a match.</p></div>
+    </section>
+<!-- lineage:end -->
 
     <section class="section" id="origin-risk" aria-labelledby="origin-risk-h">
       <p class="section-kicker">Classification</p>
@@ -1244,16 +1401,6 @@ in
     syncThemeLabel();
   });
   syncThemeLabel();
-  if (window.matchMedia && !new URLSearchParams(location.search).has("scoutTheme")) {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onScheme = (e) => {
-      const saved = store.get("car-theme");
-      if (saved === "light" || saved === "dark") return;
-      root.setAttribute("data-theme", e.matches ? "dark" : "light");
-      syncThemeLabel();
-    };
-    if (mq.addEventListener) mq.addEventListener("change", onScheme); else if (mq.addListener) mq.addListener(onScheme);
-  }
 
   /* Scrollspy for the side contents and the chip bar */
   const sections = $$("main section[id]");

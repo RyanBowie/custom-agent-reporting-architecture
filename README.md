@@ -45,12 +45,12 @@ flowchart TB
     ENV["Dataverse in each environment<br/>botcomponents"]
     DEF["Defender advanced hunting"]
   end
-  subgraph C["2 · Collectors · Power Automate, daily"]
+  subgraph C["2 · Collectors · Power Automate, daily, in one reporting environment"]
     LC["Lane C · Copilot Interaction Logging<br/>separate build guide"]
     LE["Lane E · SharePoint agents"]
     LD["Lane D · Knowledge sweep"]
   end
-  STORE[("Reporting Dataverse<br/>collector tables · systemuser")]
+  STORE[("Reporting Dataverse · one environment<br/>collector tables · systemuser")]
   subgraph M["3 · Model and report"]
     SM["Power BI semantic model<br/>21 tables · 166 measures"]
     RPT["Power BI report<br/>16 pages · 287 visuals"]
@@ -62,7 +62,7 @@ flowchart TB
   LE --> STORE
   LD --> STORE
   ARG -- "Lane A · Azure Resource Graph connector" --> SM
-  STORE -- "Lanes B to E · OData feed" --> SM
+  STORE -- "Lanes B to E · one OData feed" --> SM
   DEF -- "Lane F · Web connector" --> SM
   SM --> RPT
 ```
@@ -72,16 +72,40 @@ flowchart TB
 | A | Agent inventory: Copilot Studio and Agent Builder agents, Foundry projects, agent flows, environments | Power BI queries Azure Resource Graph at refresh |
 | B | Creator and owner names | Dataverse `systemuser` at refresh |
 | C | Per-turn interaction telemetry from the Purview audit log | Daily collector flow (plus a manual back-fill), built with [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging) |
-| D | Named knowledge sources for each agent | Daily sweep of every environment |
+| D | Named knowledge sources for each agent | Daily sweep of every environment, copied into the reporting environment |
 | E | SharePoint agent (`.agent` file) inventory | Daily collector flow |
 | F | Unsanctioned AI tools on managed devices | Defender advanced hunting at refresh |
 
 > [!NOTE]
-> **Copilot interaction usage is captured by [Copilot Interaction Logging](https://ryanbowie.github.io/copilot-interaction-logging/).** Its two flows write audit metadata to three Dataverse tables, and the semantic model builds its Usage tables (Interaction, CopilotSurface and TelemetryCoverage) from them. It's one example of a capture method: the same audit records could reach the model from the Microsoft Sentinel `CopilotActivity` table, the Office 365 Management Activity API or a store you already run.
+> **Copilot interaction usage is captured by [Copilot Interaction Logging](https://ryanbowie.github.io/copilot-interaction-logging/).** Its two flows write audit metadata to three Dataverse tables, and the semantic model reads the interactions table to build Interaction and CopilotSurface. The other two tables monitor the collector. It's one example of a capture method: the same audit records could reach the model from the Microsoft Sentinel `CopilotActivity` table, the Office 365 Management Activity API or a store you already run.
 
 - **Read-only.** It never changes an agent. The only writes are the collectors' rows in your own Dataverse.
+- **One reporting environment.** The collectors run in one environment and write there, and lane D copies every environment's knowledge sources into it, so the model needs one Dataverse connection with a static URL, however many environments the tenant has. Install Copilot Interaction Logging in the same environment.
 - **No gateway.** Scheduled refresh runs entirely in the Power BI service, using three connectors.
 - **Data first.** The report pages were designed around what the APIs actually return, and the guide records what was learned along the way.
+
+## Which table feeds which page
+
+The model has 21 tables and 13 relationships, with Agent at the hub. "Direct" lanes are read by the page's own visuals; "through Agent" lanes arrive through Agent's calculated columns or measures (creator names from lane B, last activity from lane C). Reference tables are static and held in the model. The [full lineage](https://ryanbowie.github.io/custom-agent-reporting-architecture/#lineage) lists every table and where it comes from.
+
+| Page | Visuals | Direct lanes | Through Agent |
+|---|---|---|---|
+| 1. Executive overview | 23 | A, C | B |
+| 2. All agents | 17 | A, C | B |
+| 3. Agent analytics | 16 | A, C | B |
+| 4. Agent inventory | 17 | A | B, C |
+| 5. Creators & ownership | 18 | A | B, C |
+| 6. Usage & popularity | 18 | A, Reference | B, C |
+| 7. Copilot interactions | 18 | A, C | – |
+| 8. SharePoint agents | 19 | C, E | – |
+| 9. Adoption & activity | 20 | A | B, C |
+| 10. Governance & risk | 20 | A, Reference | B |
+| 11. Tools & integration | 18 | A | B |
+| 12. Knowledge & grounding | 19 | A | B |
+| 13. Knowledge sources | 19 | A, D | B |
+| 14. Azure AI Foundry | 19 | A | B |
+| 15. Data sources & gaps | 12 | A, Reference | – |
+| 16. Shadow AI (endpoints) | 14 | F, Reference | – |
 
 ## Related
 
