@@ -1,5 +1,7 @@
 # Custom Agent Reporting – Architecture
 
+[![Custom Agent Reporting – Architecture: tenant-wide reporting on AI agents with Power BI, Dataverse, Azure Resource Graph and the Purview audit log](docs/assets/og.png)](https://ryanbowie.github.io/custom-agent-reporting-architecture/)
+
 A community reference architecture for **tenant-wide reporting on AI agents** across Microsoft Copilot Studio, Microsoft 365 Copilot Agent Builder, SharePoint agents and Microsoft Foundry (formerly Azure AI Foundry), built with Power BI, Azure Resource Graph, Dataverse, the Microsoft Purview audit log and Microsoft Defender.
 
 **Read the full guide: <https://ryanbowie.github.io/custom-agent-reporting-architecture/>**
@@ -18,7 +20,8 @@ A community reference architecture for **tenant-wide reporting on AI agents** ac
 | Path | Contents |
 |---|---|
 | `docs/index.html` | The guide, published with GitHub Pages: architecture, data lanes, collectors, gateway-free refresh, semantic model, origin and risk scoring, coverage, findings, Shadow AI, permissions and limitations |
-| `docs/assets/` | Six screenshots of the working report |
+| `docs/assets/` | Six screenshots of the working report, and the social card used by the guide |
+| `SECURITY.md` | How to report a security problem, and the security model in brief |
 
 **Documentation only.** The Power BI report file, the semantic model and the code that generates them are **not** published. The guide describes the design in enough detail to build your own.
 
@@ -43,7 +46,7 @@ flowchart TB
     DEF["Defender advanced hunting"]
   end
   subgraph C["2 · Collectors · Power Automate, daily"]
-    LC["Lane C · Interaction logging"]
+    LC["Lane C · Copilot Interaction Logging<br/>separate build guide"]
     LE["Lane E · SharePoint agents"]
     LD["Lane D · Knowledge sweep"]
   end
@@ -68,10 +71,13 @@ flowchart TB
 |---|---|---|
 | A | Agent inventory: Copilot Studio and Agent Builder agents, Foundry projects, agent flows, environments | Power BI queries Azure Resource Graph at refresh |
 | B | Creator and owner names | Dataverse `systemuser` at refresh |
-| C | Per-turn interaction telemetry from the Purview audit log | Daily collector flow |
+| C | Per-turn interaction telemetry from the Purview audit log | Daily collector flow (plus a manual back-fill), built with [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging) |
 | D | Named knowledge sources for each agent | Daily sweep of every environment |
 | E | SharePoint agent (`.agent` file) inventory | Daily collector flow |
 | F | Unsanctioned AI tools on managed devices | Defender advanced hunting at refresh |
+
+> [!NOTE]
+> **Copilot interaction usage is captured by [Copilot Interaction Logging](https://ryanbowie.github.io/copilot-interaction-logging/).** Its two flows write audit metadata to three Dataverse tables, and the semantic model builds its Usage tables (Interaction, CopilotSurface and TelemetryCoverage) from them. It's one example of a capture method: the same audit records could reach the model from the Microsoft Sentinel `CopilotActivity` table, the Office 365 Management Activity API or a store you already run.
 
 - **Read-only.** It never changes an agent. The only writes are the collectors' rows in your own Dataverse.
 - **No gateway.** Scheduled refresh runs entirely in the Power BI service, using three connectors.
@@ -79,12 +85,12 @@ flowchart TB
 
 ## Related
 
-- [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging): the lane C collector, documented separately as a build guide with no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables.
+- [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging) ([guide](https://ryanbowie.github.io/copilot-interaction-logging/)): the lane C collector and the capture method behind the model's Usage tables, documented separately as a build guide with no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables.
 - [Microsoft Agent 365 overview](https://learn.microsoft.com/microsoft-agent-365/overview).
 
 ## Licence and disclaimer
 
-Released under the [MIT licence](LICENSE).
+Released under the [MIT licence](LICENSE). To report a security problem, see [Security](SECURITY.md).
 
 This is an independent community project. It isn't a Microsoft product and isn't supported by Microsoft. The content is provided "as is", without warranty of any kind. Test any design in a non-production tenant first, and review it with your security and compliance teams.
 
