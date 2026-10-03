@@ -439,9 +439,12 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
 
 /* Two-part series band */
 .dl-series { margin: 72px 0 8px; padding: 24px; border: 1px solid var(--cp-border); border-radius: var(--radius-card); background-color: var(--cp-bg-elevated); background-image: radial-gradient(circle, color-mix(in srgb, var(--cp-border-strong) 40%, transparent) 1px, transparent 1.6px); background-size: 20px 20px; }
-.dl-series-k { margin: 0 0 14px; color: var(--cp-accent); font: 700 0.75rem/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.dl-series-k, .dl-others-k { margin: 0 0 14px; color: var(--cp-accent); font: 700 0.75rem/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
 .dl-series ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
-.dl-series li { margin: 0; }
+.dl-series li, .dl-others li { margin: 0; }
+.dl-others { margin: 24px 0 8px; padding: 24px; border: 1px solid var(--cp-border); border-radius: var(--radius-card); background: var(--cp-bg-elevated); }
+.dl-others ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
+.dl-others .dl-no { font-size: 1.5rem; }
 .dl-card { display: flex; flex-direction: column; gap: 6px; height: 100%; padding: 18px 20px; border: 1px solid var(--cp-border); border-radius: var(--radius); background: var(--cp-surface); box-shadow: var(--card-shadow); color: var(--cp-text); text-decoration: none; transition: border-color 0.2s ease, transform 0.2s ease; }
 .dl-card:hover, .dl-card:focus-visible { border-color: var(--cp-accent); color: var(--cp-text); transform: translateY(-2px); }
 .dl-card[aria-current="page"] { border-color: color-mix(in srgb, var(--cp-accent) 45%, var(--cp-border)); background: linear-gradient(var(--cp-accent-soft), var(--cp-accent-soft)), var(--cp-surface); }
@@ -451,7 +454,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
 .dl-go { margin-top: auto; padding-top: 6px; color: var(--cp-accent); font-size: 0.9rem; font-weight: 600; }
 .dl-here { align-self: flex-start; margin-top: auto; padding: 2px 10px; border-radius: 999px; background: var(--cp-accent); color: var(--cp-accent-fg); font: 700 0.7rem/1.6 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
 
-@media (max-width: 600px) { .hero { padding: 36px 14px 20px; } .dl-series { padding: 18px 14px; } }
+@media (max-width: 600px) { .hero { padding: 36px 14px 20px; } .dl-series, .dl-others { padding: 18px 14px; } }
 @media (forced-colors: active) {
   .hero h1 { background: none; color: CanvasText; -webkit-text-fill-color: CanvasText; }
   .hero h1::after, #dl-progress { forced-color-adjust: none; background: Highlight; }
@@ -1330,6 +1333,17 @@ in
       </ol>
     </aside>
     <!-- dl-series:end -->
+    <!-- dl-others:start -->
+    <aside class="dl-others" aria-label="More community projects">
+      <p class="dl-others-k">More community projects</p>
+      <ol>
+        <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-powerplatform-solution-reviewer-site/"><span class="dl-no" aria-hidden="true">03</span><strong>Power Platform Solution Reviewer</strong><span class="dl-desc">A Copilot Studio agent that reviews Power Platform solutions, shown on a real canvas app with its full output and setup guidance.</span><span class="dl-go">Visit site &rarr;</span></a></li>
+        <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-sharepoint-search-hub/"><span class="dl-no" aria-hidden="true">04</span><strong>SharePoint Search Hub</strong><span class="dl-desc">Hub-and-spoke SharePoint search for Copilot Studio, with results checked against the caller's access and a private Excel export.</span><span class="dl-go">Visit site &rarr;</span></a></li>
+        <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-powerbi-agent/"><span class="dl-no" aria-hidden="true">05</span><strong>Power BI Agent</strong><span class="dl-desc">A standard Copilot Studio agent that writes DAX and queries Power BI semantic models as the signed-in user. No Fabric data agent needed.</span><span class="dl-go">Visit site &rarr;</span></a></li>
+        <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-documentation-builder/"><span class="dl-no" aria-hidden="true">06</span><strong>Documentation Builder</strong><span class="dl-desc">Template-aligned technical documents from Copilot Studio, comparing the standard and GitHub Copilot harnesses with observed results.</span><span class="dl-go">Visit site &rarr;</span></a></li>
+      </ol>
+    </aside>
+    <!-- dl-others:end -->
   </main>
 </div>
 
@@ -1564,7 +1578,7 @@ in
   // Sections below the fold fade up once as they arrive.
   const fold = window.innerHeight;
   const targets = Array.prototype.filter.call(
-    document.querySelectorAll("main > section:not(.hero), main > .dl-series"),
+    document.querySelectorAll("main > section:not(.hero), main > .dl-series, main > .dl-others"),
     (el) => el.getBoundingClientRect().top > fold
   );
   const io = new IntersectionObserver((entries) => {
