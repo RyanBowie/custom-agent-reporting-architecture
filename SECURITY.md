@@ -10,7 +10,7 @@ Never include secrets, tenant IDs, user names, audit records or other personal d
 
 ## Scope
 
-This repository publishes documentation and anonymised screenshots only. There's no Power BI file, semantic model, flow export or code to patch. Report problems with the guide itself, for example:
+This repository is an architecture showcase with anonymised screenshots. No Power BI solution is provided: there's no Power BI file, semantic model, flow export or code to patch. Report problems with the guide itself, for example:
 
 - advice that would leave a build insecure or over-permissioned;
 - a screenshot or example that exposes something it shouldn't.
@@ -23,7 +23,7 @@ Read [Permissions](https://ryanbowie.github.io/custom-agent-reporting-architectu
 
 - **Privileged roles and app registrations.** The report owner needs admin-level read roles, such as Power Platform Administrator. The interaction and SharePoint-agent collectors (lanes C and E) use an app registration with the tenant-wide Microsoft Graph **application** permission `AuditLogsQuery.Read.All`. Get the approvals your organisation requires before anyone grants admin consent, and protect each credential like a privileged admin credential.
 - **Lane D is the most privileged.** Its optional provisioning flow adds an application user with **System Administrator** to each environment. Keep the list of grants so that you can revoke them, or grant access per environment by hand instead.
-- **Lane C has its own guide.** Interaction telemetry is captured with [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging), which covers the approvals to get first, the secret-handling decision and run-history exposure.
+- **Lane C has its own guide.** Interaction telemetry is captured with [Copilot Interaction Logging](https://ryanbowie.github.io/copilot-interaction-logging/), whose [build guide](https://ryanbowie.github.io/copilot-interaction-logging/#build) covers the approvals to get first, the secret-handling decision and run-history exposure.
 - **Personal data.** The data holds user principal names, agent creators and owners, and resource names. The lane C tables also hold client IP addresses. Limit who can read the Dataverse tables, the flow run history, the semantic model and the report.
 - **Reporting only.** It can't create, edit, turn off, delete or run agents, and it doesn't read prompts or responses. It is not a replacement for Microsoft Agent 365.
 

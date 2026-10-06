@@ -6,6 +6,9 @@ A community reference architecture for **tenant-wide reporting on AI agents** ac
 
 **Read the full guide: <https://ryanbowie.github.io/custom-agent-reporting-architecture/>**
 
+> [!NOTE]
+> **An architecture showcase, not a Power BI solution.** This shows what's possible with a custom build. No Power BI solution is provided (no PBIX, semantic model or code), because the setup is complex and every tenant needs its own app registrations, permissions, collectors and customisation. Use the design as a guide to build your own.
+
 > [!IMPORTANT]
 > **This is not a replacement for Microsoft Agent 365.**
 >
@@ -23,7 +26,7 @@ A community reference architecture for **tenant-wide reporting on AI agents** ac
 | `docs/assets/` | Six screenshots of the working report, and the social card used by the guide |
 | `SECURITY.md` | How to report a security problem, and the security model in brief |
 
-**Documentation only.** The Power BI report file, the semantic model and the code that generates them are **not** published. The guide describes the design in enough detail to build your own.
+**No Power BI solution is provided.** The Power BI report file (PBIX), the semantic model and the code that generates them are **not** published, because the setup is complex and needs customising for every tenant. The guide describes the design in enough detail to build your own.
 
 ## Screenshots
 
@@ -46,7 +49,7 @@ flowchart TB
     DEF["Defender advanced hunting"]
   end
   subgraph C["2 · Collectors · Power Automate, daily, in one reporting environment"]
-    LC["Lane C · Copilot Interaction Logging<br/>separate build guide"]
+    LC["Lane C · Copilot Interaction Logging<br/>own collector flows"]
     LE["Lane E · SharePoint agents"]
     LD["Lane D · Knowledge sweep"]
   end
@@ -71,7 +74,7 @@ flowchart TB
 |---|---|---|
 | A | Agent inventory: Copilot Studio and Agent Builder agents, Foundry projects, agent flows, environments | Power BI queries Azure Resource Graph at refresh |
 | B | Creator and owner names | Dataverse `systemuser` at refresh |
-| C | Per-turn interaction telemetry from the Purview audit log | Daily collector flow (plus a manual back-fill), built with [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging) |
+| C | Per-turn interaction telemetry from the Purview audit log | Daily collector flow (plus a manual back-fill), built with [Copilot Interaction Logging](https://ryanbowie.github.io/copilot-interaction-logging/#build) |
 | D | Named knowledge sources for each agent | Daily sweep of every environment, copied into the reporting environment |
 | E | SharePoint agent (`.agent` file) inventory | Daily collector flow |
 | F | Unsanctioned AI tools on managed devices | Defender advanced hunting at refresh |
@@ -91,26 +94,26 @@ flowchart TB
 
 ## Which table feeds which page
 
-The model has 21 tables and 13 relationships, with Agent at the hub. "Direct" lanes are read by the page's own visuals; "through Agent" lanes arrive through Agent's calculated columns or measures (creator names from lane B, last activity from lane C). Reference tables are static and held in the model. The [full lineage](https://ryanbowie.github.io/custom-agent-reporting-architecture/#lineage) lists every table and where it comes from.
+The model has 21 tables and 13 relationships, with Agent at the hub. "Direct" lanes are read by the page's own visuals; "through Agent" lanes arrive through Agent's calculated columns or measures (creator names from lane B, last activity from lane C). Reference tables are static and held in the model. The [full lineage](https://ryanbowie.github.io/custom-agent-reporting-architecture/#lineage) lists every table and where it comes from; each page name below links to that page's row on the site.
 
 | Page | Visuals | Direct lanes | Through Agent |
 |---|---|---|---|
-| 1. Executive overview | 23 | A, C | B |
-| 2. All agents | 17 | A, C | B |
-| 3. Agent analytics | 16 | A, C | B |
-| 4. Agent inventory | 17 | A | B, C |
-| 5. Creators & ownership | 18 | A | B, C |
-| 6. Usage & popularity | 18 | A, Reference | B, C |
-| 7. Copilot interactions | 18 | A, C | – |
-| 8. SharePoint agents | 19 | C, E | – |
-| 9. Adoption & activity | 20 | A | B, C |
-| 10. Governance & risk | 20 | A, Reference | B |
-| 11. Tools & integration | 18 | A | B |
-| 12. Knowledge & grounding | 19 | A | B |
-| 13. Knowledge sources | 19 | A, D | B |
-| 14. Azure AI Foundry | 19 | A | B |
-| 15. Data sources & gaps | 12 | A, Reference | – |
-| 16. Shadow AI (endpoints) | 14 | F, Reference | – |
+| [1. Executive overview](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-1) | 23 | A, C | B |
+| [2. All agents](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-2) | 17 | A, C | B |
+| [3. Agent analytics](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-3) | 16 | A, C | B |
+| [4. Agent inventory](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-4) | 17 | A | B, C |
+| [5. Creators & ownership](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-5) | 18 | A | B, C |
+| [6. Usage & popularity](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-6) | 18 | A, Reference | B, C |
+| [7. Copilot interactions](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-7) | 18 | A, C | – |
+| [8. SharePoint agents](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-8) | 19 | C, E | – |
+| [9. Adoption & activity](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-9) | 20 | A | B, C |
+| [10. Governance & risk](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-10) | 20 | A, Reference | B |
+| [11. Tools & integration](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-11) | 18 | A | B |
+| [12. Knowledge & grounding](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-12) | 19 | A | B |
+| [13. Knowledge sources](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-13) | 19 | A, D | B |
+| [14. Azure AI Foundry](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-14) | 19 | A | B |
+| [15. Data sources & gaps](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-15) | 12 | A, Reference | – |
+| [16. Shadow AI (endpoints)](https://ryanbowie.github.io/custom-agent-reporting-architecture/#page-16) | 14 | F, Reference | – |
 
 ## Origins
 
@@ -120,8 +123,8 @@ Treat the design as a demonstration of what a custom build can do, and review ev
 
 ## Related
 
-- [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging) ([guide](https://ryanbowie.github.io/copilot-interaction-logging/)): the lane C collector and the capture method behind the model's Usage tables, documented separately as a build guide with no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables.
-- More community projects: [Power Platform Solution Reviewer](https://ryanbowie.github.io/copilot-studio-powerplatform-solution-reviewer-site/), [SharePoint Search Hub](https://ryanbowie.github.io/copilot-studio-sharepoint-search-hub/), [Power BI Agent](https://ryanbowie.github.io/copilot-studio-powerbi-agent/), [Documentation Builder](https://ryanbowie.github.io/copilot-studio-documentation-builder/) and [AI Video Creation Guide](https://ryanbowie.github.io/ai-video-creation-guide/).
+- [Copilot Interaction Logging](https://ryanbowie.github.io/copilot-interaction-logging/): the lane C collector and the capture method behind the model's Usage tables, documented separately with a step-by-step [build guide](https://ryanbowie.github.io/copilot-interaction-logging/#build) and no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables. The source is in its [repository](https://github.com/RyanBowie/copilot-interaction-logging).
+- More community projects: [Power Platform Solution Reviewer](https://ryanbowie.github.io/copilot-studio-powerplatform-solution-reviewer-site/), [SharePoint Search Hub](https://ryanbowie.github.io/copilot-studio-sharepoint-search-hub/), [Power BI Agent](https://ryanbowie.github.io/copilot-studio-powerbi-agent/), [Documentation Builder](https://ryanbowie.github.io/copilot-studio-documentation-builder/), [AI Video Creation Guide](https://ryanbowie.github.io/ai-video-creation-guide/) and [Copilot Autoharness](https://github.com/RyanBowie/copilot-autoharness).
 - [Microsoft Agent 365 overview](https://learn.microsoft.com/microsoft-agent-365/overview).
 
 ## Licence and disclaimer

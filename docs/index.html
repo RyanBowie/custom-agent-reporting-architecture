@@ -24,19 +24,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
 <title>Custom Agent Reporting – Architecture · Reference design for tenant-wide agent reporting</title>
-<meta name="description" content="Community reference architecture showing how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. Documentation and screenshots only; not a replacement for Microsoft Agent 365.">
+<meta name="description" content="Community architecture showcase: how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. No Power BI solution is provided; not a replacement for Microsoft Agent 365.">
 <meta property="og:title" content="Custom Agent Reporting – Architecture">
-<meta property="og:description" content="Community reference architecture showing how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. Documentation and screenshots only; not a replacement for Microsoft Agent 365.">
+<meta property="og:description" content="Community architecture showcase: how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. No Power BI solution is provided; not a replacement for Microsoft Agent 365.">
 <meta property="og:type" content="website">
 <!-- dl-meta:start -->
 <meta property="og:url" content="https://ryanbowie.github.io/custom-agent-reporting-architecture/">
 <meta property="og:image" content="https://ryanbowie.github.io/custom-agent-reporting-architecture/assets/og.png">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="640">
-<meta property="og:image:alt" content="Custom Agent Reporting – Architecture, part 1 of 2: a reference design for agent reporting. Documentation only; not a replacement for Microsoft Agent 365.">
+<meta property="og:image:alt" content="Custom Agent Reporting – Architecture, part 1 of 2: an architecture showcase for agent reporting. No Power BI solution is provided; not a replacement for Microsoft Agent 365.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Custom Agent Reporting – Architecture">
-<meta name="twitter:description" content="Community reference architecture showing how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. Documentation and screenshots only; not a replacement for Microsoft Agent 365.">
+<meta name="twitter:description" content="Community architecture showcase: how tenant-wide reporting on agents can be built with Power BI, Azure Resource Graph, Dataverse and Defender. No Power BI solution is provided; not a replacement for Microsoft Agent 365.">
 <meta name="twitter:image" content="https://ryanbowie.github.io/custom-agent-reporting-architecture/assets/og.png">
 <!-- dl-meta:end -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2028%2028'%3E%3Crect%20width='28'%20height='28'%20rx='7'%20fill='%237653ae'/%3E%3Cpath%20d='M8%2020v-6M14%2020V8M20%2020v-9'%20fill='none'%20stroke='%23fff'%20stroke-width='2.5'%20stroke-linecap='round'/%3E%3C/svg%3E">
@@ -287,6 +287,15 @@ table.wrap-head thead th { white-space: normal; }
 .lin-matrix td.lin-mark { text-align: center; color: var(--cp-accent); font-size: 1.05rem; }
 .lin-matrix td.lin-via { color: var(--cp-text-muted); }
 @media (max-width: 640px) { .lin-matrix td.lin-mark { text-align: left; } }
+/* Page-number chips: filled = the page has a screenshot, outlined = it doesn't */
+.pg-list { display: flex; flex-wrap: wrap; gap: 4px; max-width: 13rem; }
+.pg { display: inline-block; min-width: 1.9em; padding: 0 6px; border: 1px solid var(--cp-border-strong); border-radius: 999px; font-size: 0.8rem; font-weight: 600; line-height: 1.6; text-align: center; color: var(--cp-text); text-decoration: none; font-variant-numeric: tabular-nums; }
+.pg-shot { border-color: var(--cp-accent); background: var(--cp-accent); color: var(--cp-accent-fg); }
+a.pg:hover, a:hover > .pg { border-color: var(--cp-accent); background: var(--cp-highlight); }
+a.pg-shot:hover, a:hover > .pg-shot { border-color: var(--cp-accent-hover); background: var(--cp-accent-hover); }
+.pg-index { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 8px 0 0; padding: 0; list-style: none; }
+.lin-matrix tr:target > * { background: var(--cp-highlight); }
+.lin-matrix tr:target > th { box-shadow: inset 3px 0 0 var(--cp-accent); }
 /* Narrow screens: the script labels each cell and adds .stack, so each row becomes a card */
 @media (max-width: 640px) {
   table.stack, table.stack tbody, table.stack tr, table.stack th, table.stack td { display: block; }
@@ -299,6 +308,8 @@ table.wrap-head thead th { white-space: normal; }
   table.stack td:empty { display: none; }
   table.stack tr.is-relevant { background: var(--cp-highlight); }
   table.stack tr.is-relevant > * { background: transparent; }
+  table.stack tr:target { background: var(--cp-highlight); box-shadow: inset 3px 0 0 var(--cp-accent); }
+  table.stack tr:target > * { background: transparent; box-shadow: none; }
 }
 details { margin: 12px 0; border: 1px solid var(--cp-border); border-radius: var(--radius); background: var(--cp-surface); }
 details > summary { padding: 12px 16px; font-weight: 600; cursor: pointer; }
@@ -422,7 +433,9 @@ dialog.lightbox::backdrop { background: rgba(0, 0, 0, .6); }
 .hero .facts li:first-child strong { font-size: 1.7rem; line-height: 1.15; color: var(--cp-accent); }
 @media (min-width: 440px) { .hero .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hero .facts li:first-child { grid-column: span 2; } }
 @media (min-width: 440px) and (max-width: 779px) { .hero .facts li:last-child:nth-child(even) { grid-column: span 2; } }
-@media (min-width: 780px) { .hero .facts { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 780px) { .hero .facts { grid-template-columns: repeat(3, minmax(0, 1fr)); } .hero .facts li:last-child:nth-child(3n+1) { grid-column: span 2; } }
+.hero .showcase { max-width: 80ch; margin: 20px 0; }
+.hero .showcase p:last-child { margin-bottom: 0; }
 
 /* Numbered chapters */
 main { counter-reset: dlch; }
@@ -432,6 +445,7 @@ main { counter-reset: dlch; }
 #dl-progress { position: fixed; z-index: 60; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, var(--cp-chart-blue), var(--cp-chart-purple), var(--cp-chart-magenta)); transform: scaleX(var(--dl-p, 0)); transform-origin: 0 50%; pointer-events: none; }
 html.dl-motion .dl-reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
 html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
+html.dl-motion .dl-reveal.dl-now { transition: none; }
 
 /* Browser-frame chrome on screenshots */
 .shot-btn::before, .shot a[data-lightbox]::before { content: ""; display: block; height: 22px; border-bottom: 1px solid var(--cp-border); background: radial-gradient(circle, var(--cp-accent) 0 3px, transparent 3.6px) 12px 50% / 10px 10px no-repeat, radial-gradient(circle, var(--cp-border-strong) 0 3px, transparent 3.6px) 28px 50% / 10px 10px no-repeat, radial-gradient(circle, var(--cp-border-strong) 0 3px, transparent 3.6px) 44px 50% / 10px 10px no-repeat, var(--cp-surface-soft); }
@@ -543,10 +557,14 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
 
   <main id="main" tabindex="-1">
     <section class="section hero" id="top" aria-labelledby="page-title">
-      <p class="pill">Community project · Not a Microsoft product · Documentation only</p>
+      <p class="pill">Community project · Not a Microsoft product · Architecture showcase</p>
       <h1 id="page-title">Custom Agent Reporting – Architecture</h1>
       <p class="lede">A reference design for tenant-wide <strong>reporting</strong> on agents across Copilot Studio, Microsoft 365 Copilot Agent Builder, SharePoint agents and Microsoft Foundry. It is built from read-only Microsoft APIs, a few Power Automate collectors and a Power BI report.</p>
-      <p>This page documents a working build to show what a custom solution can do: the architecture, the data lanes, the lessons learned and screenshots of the result. The Power BI report file (PBIX) and the code that generates it aren't published. One part of the semantic model, Copilot interaction usage, is captured by a companion collector, <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>, which is documented separately as a build guide.</p>
+      <div class="callout callout-accent showcase" role="note" id="showcase">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>An architecture showcase, not a Power BI solution</p>
+        <p>This page showcases an architecture and <strong>what's possible</strong> with a custom build: the data lanes, the semantic model's design, the lessons learned and anonymised screenshots of a working report. <strong>No Power BI solution is provided.</strong> There's no report file (PBIX), semantic model or code to download, because the setup is complex and every tenant needs its own app registrations, permissions, collectors and customisation. Use the design as a guide to build your own.</p>
+        <p>One part of the semantic model, Copilot interaction usage, comes from <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a>. Its <a href="https://ryanbowie.github.io/copilot-interaction-logging/#build">build guide</a> shows how to build that collector from scratch.</p>
+      </div>
       <p>It isn't a product, and it is <strong>not a replacement for <a href="https://learn.microsoft.com/microsoft-agent-365/overview">Microsoft Agent 365</a></strong>.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="#not-a-replacement">Read this first</a>
@@ -592,7 +610,6 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
         <li><strong>21 tables</strong><span>A star schema around the agent</span></li>
         <li><strong>16 report pages</strong><span>287 visuals</span></li>
         <li><strong>Read-only</strong><span>Never changes an agent</span></li>
-        <li><strong>Docs only</strong><span>No PBIX, solution or code</span></li>
       </ul>
     </section>
 
@@ -641,34 +658,46 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
     <section class="section" id="screenshots" aria-labelledby="screenshots-h">
       <p class="section-kicker">Proof it works</p>
       <h2 id="screenshots-h">Screenshots from a working build</h2>
-      <p>Six of the 16 report pages from a working build. Names are fictitious and figures are indicative only. Select an image to enlarge it.</p>
+      <p>Six of the 16 report pages from a working build. Names are fictitious and figures are indicative only. Select an image to enlarge it, or a caption to see which lanes feed that page.</p>
       <div class="gallery">
-        <figure class="shot">
+        <figure class="shot" id="shot-page-1">
           <a class="shot-btn" href="assets/01-executive-overview.png"><img src="assets/01-executive-overview.png" width="1389" height="725" loading="lazy" decoding="async" alt="Executive overview report page. Cards for total agents, Copilot Studio agents, Microsoft 365 Agent Builder agents, Foundry projects, agents active in the last 30 days, high-risk agents, active users and agent run-time; donut charts of agents by platform and by activity status; estate health ratios; agents created over time; and the top environments."><span class="visually-hidden"> (enlarge)</span></a>
-          <figcaption><strong>Executive overview</strong> – The whole estate on one page, sliced by origin, platform, environment and risk. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+          <figcaption><strong><a href="#page-1"><span class="visually-hidden">Page </span><span class="pg pg-shot">1</span><span class="visually-hidden">:</span> Executive overview</a></strong> – The whole estate on one page, sliced by origin, platform, environment and risk. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
         </figure>
-        <figure class="shot">
+        <figure class="shot" id="shot-page-4">
           <a class="shot-btn" href="assets/02-agent-inventory.png"><img src="assets/02-agent-inventory.png" width="1389" height="725" loading="lazy" decoding="async" alt="Agent inventory report page. Slicers for agent origin, platform, environment and risk band; cards for agents in view, distinct creators, human-built agents, environments, distinct models and total tools; bar charts of the top agent creators, models in use and regions; and an agent register table."><span class="visually-hidden"> (enlarge)</span></a>
-          <figcaption><strong>Agent inventory</strong> – A register with creator, owner, environment, orchestration, model, authentication and risk band. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+          <figcaption><strong><a href="#page-4"><span class="visually-hidden">Page </span><span class="pg pg-shot">4</span><span class="visually-hidden">:</span> Agent inventory</a></strong> – A register with creator, owner, environment, orchestration, model, authentication and risk band. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
         </figure>
-        <figure class="shot">
+        <figure class="shot" id="shot-page-7">
           <a class="shot-btn" href="assets/03-copilot-interactions.png"><img src="assets/03-copilot-interactions.png" width="1389" height="725" loading="lazy" decoding="async" alt="Copilot interactions report page. Slicers for date range, surface type and platform; cards for interactions, sessions, autonomous runs, Agent Builder turns, agents with usage and telemetry uplift; an interaction trend; a donut showing where the traffic goes; sessions and turns by month; and client surfaces."><span class="visually-hidden"> (enlarge)</span></a>
-          <figcaption><strong>Copilot interactions</strong> – Per-agent usage from the audit log through Copilot Interaction Logging, including autonomous runs and SharePoint agents. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+          <figcaption><strong><a href="#page-7"><span class="visually-hidden">Page </span><span class="pg pg-shot">7</span><span class="visually-hidden">:</span> Copilot interactions</a></strong> – Per-agent usage from the audit log through Copilot Interaction Logging, including autonomous runs and SharePoint agents. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
         </figure>
-        <figure class="shot">
+        <figure class="shot" id="shot-page-10">
           <a class="shot-btn" href="assets/04-governance-risk.png"><img src="assets/04-governance-risk.png" width="1389" height="725" loading="lazy" decoding="async" alt="Governance and risk report page. Cards for high-risk and medium-risk agents, agents shared tenant-wide, agents with no authentication, agents shared but unused and the average risk score; a risk band donut; a bar chart of authentication modes; the risk scoring model table; and a table of the highest-risk agents with their risk reasons."><span class="visually-hidden"> (enlarge)</span></a>
-          <figcaption><strong>Governance &amp; risk</strong> – Sharing, unauthenticated agents, quarantine and an explainable risk score. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+          <figcaption><strong><a href="#page-10"><span class="visually-hidden">Page </span><span class="pg pg-shot">10</span><span class="visually-hidden">:</span> Governance &amp; risk</a></strong> – Sharing, unauthenticated agents, quarantine and an explainable risk score. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
         </figure>
-        <figure class="shot">
+        <figure class="shot" id="shot-page-13">
           <a class="shot-btn" href="assets/05-knowledge-sources.png"><img src="assets/05-knowledge-sources.png" width="1389" height="725" loading="lazy" decoding="async" alt="Knowledge sources report page. Cards for named sources, sources collected, distinct hosts, reads outside the tenant, agents reaching out and coverage against Azure Resource Graph counts; named sources by type; hosts grounded in; a type-by-platform matrix; and agents reaching outside the tenant by environment."><span class="visually-hidden"> (enlarge)</span></a>
-          <figcaption><strong>Knowledge sources</strong> – SharePoint sites, websites, Dataverse tables, Graph connectors and Azure AI Search indexes. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+          <figcaption><strong><a href="#page-13"><span class="visually-hidden">Page </span><span class="pg pg-shot">13</span><span class="visually-hidden">:</span> Knowledge sources</a></strong> – SharePoint sites, websites, Dataverse tables, Graph connectors and Azure AI Search indexes. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
         </figure>
-        <figure class="shot">
+        <figure class="shot" id="shot-page-14">
           <a class="shot-btn" href="assets/06-azure-ai-foundry.png"><img src="assets/06-azure-ai-foundry.png" width="1389" height="725" loading="lazy" decoding="async" alt="Azure AI Foundry report page. Cards for Azure AI resources, Foundry projects, resources open to public networks, regions, resource groups and agent flows; a resource categories donut; regions; SKUs; and a Foundry estate table."><span class="visually-hidden"> (enlarge)</span></a>
-          <figcaption><strong>Azure AI Foundry</strong> – Regions, SKUs and public network exposure. The service is now called Microsoft Foundry. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
+          <figcaption><strong><a href="#page-14"><span class="visually-hidden">Page </span><span class="pg pg-shot">14</span><span class="visually-hidden">:</span> Azure AI Foundry</a></strong> – Regions, SKUs and public network exposure. The service is now called Microsoft Foundry. <small>Illustrative · names fictitious · figures indicative only</small></figcaption>
         </figure>
       </div>
-      <p>The other ten pages: All agents, Agent analytics, Creators &amp; ownership, Usage &amp; popularity, Adoption &amp; activity, Tools &amp; integration, Knowledge &amp; grounding, Data sources &amp; gaps, Shadow AI (endpoints) and SharePoint agents.</p>
+      <p>The other ten pages have no screenshot. Each one links to the lanes that feed it:</p>
+      <ul class="pg-index">
+        <li><a href="#page-2"><span class="visually-hidden">Page </span><span class="pg">2</span><span class="visually-hidden">:</span> All agents</a></li>
+        <li><a href="#page-3"><span class="visually-hidden">Page </span><span class="pg">3</span><span class="visually-hidden">:</span> Agent analytics</a></li>
+        <li><a href="#page-5"><span class="visually-hidden">Page </span><span class="pg">5</span><span class="visually-hidden">:</span> Creators &amp; ownership</a></li>
+        <li><a href="#page-6"><span class="visually-hidden">Page </span><span class="pg">6</span><span class="visually-hidden">:</span> Usage &amp; popularity</a></li>
+        <li><a href="#page-8"><span class="visually-hidden">Page </span><span class="pg">8</span><span class="visually-hidden">:</span> SharePoint agents</a></li>
+        <li><a href="#page-9"><span class="visually-hidden">Page </span><span class="pg">9</span><span class="visually-hidden">:</span> Adoption &amp; activity</a></li>
+        <li><a href="#page-11"><span class="visually-hidden">Page </span><span class="pg">11</span><span class="visually-hidden">:</span> Tools &amp; integration</a></li>
+        <li><a href="#page-12"><span class="visually-hidden">Page </span><span class="pg">12</span><span class="visually-hidden">:</span> Knowledge &amp; grounding</a></li>
+        <li><a href="#page-15"><span class="visually-hidden">Page </span><span class="pg">15</span><span class="visually-hidden">:</span> Data sources &amp; gaps</a></li>
+        <li><a href="#page-16"><span class="visually-hidden">Page </span><span class="pg">16</span><span class="visually-hidden">:</span> Shadow AI (endpoints)</a></li>
+      </ul>
     </section>
 
     <section class="section" id="architecture" aria-labelledby="architecture-h">
@@ -820,7 +849,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
       <h2 id="cil-h">Interaction logging (lane C)</h2>
       <div class="callout callout-accent" role="note">
         <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Lane C has its own build guide</p>
-        <p>The interaction collector is documented separately as <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a>, a documentation-only <a href="https://ryanbowie.github.io/copilot-interaction-logging/">build guide</a> with no package to install. It explains every action in both flows and why it exists, the secret-handling decision (Azure Key Vault, a plain-text environment variable or a certificate) and the environment variables, so you can build, secure and maintain the collector in your own environment.</p>
+        <p>The interaction collector is documented separately on the <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a> site, with a step-by-step <a href="https://ryanbowie.github.io/copilot-interaction-logging/#build">build guide</a> and no package to install. It explains every action in both flows and why it exists, the secret-handling decision (Azure Key Vault is recommended, or a certificate; a plain-text variable isn't recommended) and the environment variables, so you can build, secure and maintain the collector in your own environment.</p>
       </div>
       <p>What lane C adds to the model:</p>
       <ul>
@@ -866,7 +895,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
             <li><span class="step-title">Page and upsert</span> Page through the results and upsert each record on its audit record ID, so a re-run never duplicates rows.</li>
             <li><span class="step-title">Log</span> Write a run-log row with counts and errors.</li>
           </ol>
-          <p>Every HTTP call has a retry policy. <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a> documents every action in the tested flow and why it exists, so you can build it yourself.</p>
+          <p>Every HTTP call has a retry policy. <a href="https://ryanbowie.github.io/copilot-interaction-logging/#http-calls">Copilot Interaction Logging</a> documents every action in the tested flow and why it exists, so you can <a href="https://ryanbowie.github.io/copilot-interaction-logging/#build">build it yourself</a>.</p>
         </div>
       </details>
       <details>
@@ -975,7 +1004,7 @@ in
       </div>
       <div class="callout callout-accent" role="note">
         <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Where the Usage tables come from</p>
-        <p>Copilot interaction usage is the one part of the model captured by <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a>, a companion build guide. Two Power Automate flows read the Purview audit log through Microsoft Graph and write metadata to three Dataverse tables. The model reads the interactions table at refresh to build Interaction and CopilotSurface, and the activity columns on Agent (<code>LastActivityAt</code>, <code>ActivityStatus</code>). The flow-run and error tables are for monitoring the collector.</p>
+        <p>Copilot interaction usage is the one part of the model captured by <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a>, a companion site with a <a href="https://ryanbowie.github.io/copilot-interaction-logging/#build">build guide</a>. Two Power Automate flows read the Purview audit log through Microsoft Graph and write metadata to three Dataverse tables. The model reads the interactions table at refresh to build Interaction and CopilotSurface, and the activity columns on Agent (<code>LastActivityAt</code>, <code>ActivityStatus</code>). The flow-run and error tables are for monitoring the collector.</p>
         <p>It's one example of a capture method, not a requirement. The same audit records could reach the model from the <a href="https://learn.microsoft.com/azure/azure-monitor/reference/tables/copilotactivity">Microsoft Sentinel <code>CopilotActivity</code> table</a>, the <a href="https://learn.microsoft.com/office/office-365-management-api/office-365-management-activity-api-reference">Office 365 Management Activity API</a> or a store you already run. Only the model's data-access step would change.</p>
       </div>
       <h3>Relationships</h3>
@@ -996,55 +1025,56 @@ in
       <h2 id="lineage-h">Which table feeds which page</h2>
       <p>The model has 21 tables and 13 relationships, with Agent at the hub. Every Dataverse table it reads sits in one reporting environment, so it holds one Dataverse connection however many environments the tenant has. Lane C is required: the model expects the interactions table to exist. Lanes D and E are optional and load as empty tables until their collectors first run, and lane F loads empty if Defender for Endpoint isn't licensed or refuses the refresh account. The static reference tables are held in the model itself.</p>
       <h3>The main tables, their lanes and where they come from</h3>
+      <p>Each page number links to that page's row in the next table, which names it. A filled number, like <span class="pg pg-shot">1</span>, has a screenshot further up; an outlined one, like <span class="pg">2</span>, doesn't.</p>
       <div class="table-wrap">
         <table class="wrap-head">
           <thead><tr><th scope="col">Table</th><th scope="col">Lane</th><th scope="col">Holds</th><th scope="col">Comes from</th><th scope="col">Used on pages</th></tr></thead>
           <tbody>
-          <tr><th scope="row">Agent</th><td>A</td><td>One row per agent across Copilot Studio, Agent Builder and Azure AI Foundry, with owner, activity and risk columns</td><td>Azure Resource Graph, at refresh: agents, environments, usage records and Foundry projects</td><td class="nowrap">1–7, 9–15</td></tr>
-          <tr><th scope="row">Environment</th><td>A</td><td>Power Platform environments</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">9, 13, 15</td></tr>
-          <tr><th scope="row">AgentConnector</th><td>A</td><td>One row per agent and connector, including MCP server tools</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">11</td></tr>
-          <tr><th scope="row">AgentKnowledge</th><td>A</td><td>One row per agent per knowledge-source type; for Agent Builder agents it's the only integration surface</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">12–13</td></tr>
-          <tr><th scope="row">AgentFlow</th><td>A</td><td>Autonomous agent flows and Microsoft 365 agent flows</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">14–15</td></tr>
-          <tr><th scope="row">AzureAIResource</th><td>A</td><td>Foundry accounts, hubs and projects</td><td>Azure Resource Graph, at refresh</td><td class="nowrap">14</td></tr>
-          <tr><th scope="row">RiskDetail</th><td>A</td><td>Each risk factor that fired for each agent, with its points</td><td>Computed in the model from Agent and the RiskFactor rules</td><td class="nowrap">10</td></tr>
-          <tr><th scope="row">User</th><td>B</td><td>Display name, UPN and principal type for owners and creators</td><td>Dataverse <code>systemuser</code> in the reporting environment</td><td class="nowrap">1–6, 9–14</td></tr>
-          <tr><th scope="row">Interaction</th><td>C</td><td>One row per Copilot turn: time, user, surface, agent, thread and resources</td><td>The interactions table that <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a> writes in the reporting environment (required)</td><td class="nowrap">1–9</td></tr>
-          <tr><th scope="row">CopilotSurface</th><td>C</td><td>Every distinct app identity in the audit log, classified by surface and matched to the inventory</td><td>The same table (app identities only), matched against Agent and SharePointAgent</td><td class="nowrap">7–8</td></tr>
-          <tr><th scope="row">KnowledgeSource</th><td>D</td><td>One row per named source an agent reads: SharePoint site, public website, Graph connector or Azure AI Search index</td><td>A collector table in the reporting environment, swept daily from every environment (optional)</td><td class="nowrap">13</td></tr>
-          <tr><th scope="row">SharePointAgent</th><td>E</td><td><code>.agent</code> files: current or deleted, names, sites and URLs</td><td>A collector table in the reporting environment (optional)</td><td class="nowrap">8</td></tr>
-          <tr><th scope="row">ShadowAiSignal</th><td>F</td><td>Detections in three layers: installed, executed and network</td><td>Defender advanced hunting, through the Web connector</td><td class="nowrap">16</td></tr>
-          <tr><th scope="row">ShadowAiDevice</th><td>F</td><td>Device-level detail for each detection</td><td>Defender advanced hunting, through the Web connector</td><td class="nowrap">16</td></tr>
-          <tr><th scope="row">RiskFactor</th><td>Static</td><td>The risk rules and the points each one scores</td><td>Static table held in the model</td><td class="nowrap">10</td></tr>
-          <tr><th scope="row">ApiCoverage</th><td>Static</td><td>Results of the live-tested APIs</td><td>Static table held in the model</td><td class="nowrap">15</td></tr>
-          <tr><th scope="row">TelemetryCoverage</th><td>Static</td><td>Which monitoring signals each platform exposes, which explains gaps in usage figures</td><td>Static table held in the model</td><td class="nowrap">6, 15</td></tr>
-          <tr><th scope="row">ShadowAiCatalog</th><td>Static</td><td>The watchlist of AI tools to look for</td><td>Static table held in the model</td><td class="nowrap">16</td></tr>
-          <tr><th scope="row">Date</th><td>Model</td><td>A calendar from a start parameter to the end of next month</td><td>Generated in Power Query at refresh</td><td class="nowrap">1, 3, 6, 7, 9</td></tr>
-          <tr><th scope="row">Metrics</th><td>Model</td><td>The report's calculations; no data of its own</td><td>Defined in the model</td><td class="nowrap">All 16</td></tr>
+          <tr><th scope="row">Agent</th><td>A</td><td>One row per agent across Copilot Studio, Agent Builder and Azure AI Foundry, with owner, activity and risk columns</td><td>Azure Resource Graph, at refresh: agents, environments, usage records and Foundry projects</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-1" title="Page 1: Executive overview (screenshot)"><span class="visually-hidden">Page </span>1<span class="visually-hidden">: Executive overview (screenshot)</span></a><a class="pg" href="#page-2" title="Page 2: All agents"><span class="visually-hidden">Page </span>2<span class="visually-hidden">: All agents</span></a><a class="pg" href="#page-3" title="Page 3: Agent analytics"><span class="visually-hidden">Page </span>3<span class="visually-hidden">: Agent analytics</span></a><a class="pg pg-shot" href="#page-4" title="Page 4: Agent inventory (screenshot)"><span class="visually-hidden">Page </span>4<span class="visually-hidden">: Agent inventory (screenshot)</span></a><a class="pg" href="#page-5" title="Page 5: Creators &amp; ownership"><span class="visually-hidden">Page </span>5<span class="visually-hidden">: Creators &amp; ownership</span></a><a class="pg" href="#page-6" title="Page 6: Usage &amp; popularity"><span class="visually-hidden">Page </span>6<span class="visually-hidden">: Usage &amp; popularity</span></a><a class="pg pg-shot" href="#page-7" title="Page 7: Copilot interactions (screenshot)"><span class="visually-hidden">Page </span>7<span class="visually-hidden">: Copilot interactions (screenshot)</span></a><a class="pg" href="#page-9" title="Page 9: Adoption &amp; activity"><span class="visually-hidden">Page </span>9<span class="visually-hidden">: Adoption &amp; activity</span></a><a class="pg pg-shot" href="#page-10" title="Page 10: Governance &amp; risk (screenshot)"><span class="visually-hidden">Page </span>10<span class="visually-hidden">: Governance &amp; risk (screenshot)</span></a><a class="pg" href="#page-11" title="Page 11: Tools &amp; integration"><span class="visually-hidden">Page </span>11<span class="visually-hidden">: Tools &amp; integration</span></a><a class="pg" href="#page-12" title="Page 12: Knowledge &amp; grounding"><span class="visually-hidden">Page </span>12<span class="visually-hidden">: Knowledge &amp; grounding</span></a><a class="pg pg-shot" href="#page-13" title="Page 13: Knowledge sources (screenshot)"><span class="visually-hidden">Page </span>13<span class="visually-hidden">: Knowledge sources (screenshot)</span></a><a class="pg pg-shot" href="#page-14" title="Page 14: Azure AI Foundry (screenshot)"><span class="visually-hidden">Page </span>14<span class="visually-hidden">: Azure AI Foundry (screenshot)</span></a><a class="pg" href="#page-15" title="Page 15: Data sources &amp; gaps"><span class="visually-hidden">Page </span>15<span class="visually-hidden">: Data sources &amp; gaps</span></a></span></td></tr>
+          <tr><th scope="row">Environment</th><td>A</td><td>Power Platform environments</td><td>Azure Resource Graph, at refresh</td><td><span class="pg-list"><a class="pg" href="#page-9" title="Page 9: Adoption &amp; activity"><span class="visually-hidden">Page </span>9<span class="visually-hidden">: Adoption &amp; activity</span></a><a class="pg pg-shot" href="#page-13" title="Page 13: Knowledge sources (screenshot)"><span class="visually-hidden">Page </span>13<span class="visually-hidden">: Knowledge sources (screenshot)</span></a><a class="pg" href="#page-15" title="Page 15: Data sources &amp; gaps"><span class="visually-hidden">Page </span>15<span class="visually-hidden">: Data sources &amp; gaps</span></a></span></td></tr>
+          <tr><th scope="row">AgentConnector</th><td>A</td><td>One row per agent and connector, including MCP server tools</td><td>Azure Resource Graph, at refresh</td><td><span class="pg-list"><a class="pg" href="#page-11" title="Page 11: Tools &amp; integration"><span class="visually-hidden">Page </span>11<span class="visually-hidden">: Tools &amp; integration</span></a></span></td></tr>
+          <tr><th scope="row">AgentKnowledge</th><td>A</td><td>One row per agent per knowledge-source type; for Agent Builder agents it's the only integration surface</td><td>Azure Resource Graph, at refresh</td><td><span class="pg-list"><a class="pg" href="#page-12" title="Page 12: Knowledge &amp; grounding"><span class="visually-hidden">Page </span>12<span class="visually-hidden">: Knowledge &amp; grounding</span></a><a class="pg pg-shot" href="#page-13" title="Page 13: Knowledge sources (screenshot)"><span class="visually-hidden">Page </span>13<span class="visually-hidden">: Knowledge sources (screenshot)</span></a></span></td></tr>
+          <tr><th scope="row">AgentFlow</th><td>A</td><td>Autonomous agent flows and Microsoft 365 agent flows</td><td>Azure Resource Graph, at refresh</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-14" title="Page 14: Azure AI Foundry (screenshot)"><span class="visually-hidden">Page </span>14<span class="visually-hidden">: Azure AI Foundry (screenshot)</span></a><a class="pg" href="#page-15" title="Page 15: Data sources &amp; gaps"><span class="visually-hidden">Page </span>15<span class="visually-hidden">: Data sources &amp; gaps</span></a></span></td></tr>
+          <tr><th scope="row">AzureAIResource</th><td>A</td><td>Foundry accounts, hubs and projects</td><td>Azure Resource Graph, at refresh</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-14" title="Page 14: Azure AI Foundry (screenshot)"><span class="visually-hidden">Page </span>14<span class="visually-hidden">: Azure AI Foundry (screenshot)</span></a></span></td></tr>
+          <tr><th scope="row">RiskDetail</th><td>A</td><td>Each risk factor that fired for each agent, with its points</td><td>Computed in the model from Agent and the RiskFactor rules</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-10" title="Page 10: Governance &amp; risk (screenshot)"><span class="visually-hidden">Page </span>10<span class="visually-hidden">: Governance &amp; risk (screenshot)</span></a></span></td></tr>
+          <tr><th scope="row">User</th><td>B</td><td>Display name, UPN and principal type for owners and creators</td><td>Dataverse <code>systemuser</code> in the reporting environment</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-1" title="Page 1: Executive overview (screenshot)"><span class="visually-hidden">Page </span>1<span class="visually-hidden">: Executive overview (screenshot)</span></a><a class="pg" href="#page-2" title="Page 2: All agents"><span class="visually-hidden">Page </span>2<span class="visually-hidden">: All agents</span></a><a class="pg" href="#page-3" title="Page 3: Agent analytics"><span class="visually-hidden">Page </span>3<span class="visually-hidden">: Agent analytics</span></a><a class="pg pg-shot" href="#page-4" title="Page 4: Agent inventory (screenshot)"><span class="visually-hidden">Page </span>4<span class="visually-hidden">: Agent inventory (screenshot)</span></a><a class="pg" href="#page-5" title="Page 5: Creators &amp; ownership"><span class="visually-hidden">Page </span>5<span class="visually-hidden">: Creators &amp; ownership</span></a><a class="pg" href="#page-6" title="Page 6: Usage &amp; popularity"><span class="visually-hidden">Page </span>6<span class="visually-hidden">: Usage &amp; popularity</span></a><a class="pg" href="#page-9" title="Page 9: Adoption &amp; activity"><span class="visually-hidden">Page </span>9<span class="visually-hidden">: Adoption &amp; activity</span></a><a class="pg pg-shot" href="#page-10" title="Page 10: Governance &amp; risk (screenshot)"><span class="visually-hidden">Page </span>10<span class="visually-hidden">: Governance &amp; risk (screenshot)</span></a><a class="pg" href="#page-11" title="Page 11: Tools &amp; integration"><span class="visually-hidden">Page </span>11<span class="visually-hidden">: Tools &amp; integration</span></a><a class="pg" href="#page-12" title="Page 12: Knowledge &amp; grounding"><span class="visually-hidden">Page </span>12<span class="visually-hidden">: Knowledge &amp; grounding</span></a><a class="pg pg-shot" href="#page-13" title="Page 13: Knowledge sources (screenshot)"><span class="visually-hidden">Page </span>13<span class="visually-hidden">: Knowledge sources (screenshot)</span></a><a class="pg pg-shot" href="#page-14" title="Page 14: Azure AI Foundry (screenshot)"><span class="visually-hidden">Page </span>14<span class="visually-hidden">: Azure AI Foundry (screenshot)</span></a></span></td></tr>
+          <tr><th scope="row">Interaction</th><td>C</td><td>One row per Copilot turn: time, user, surface, agent, thread and resources</td><td>The interactions table that <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a> writes in the reporting environment (required)</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-1" title="Page 1: Executive overview (screenshot)"><span class="visually-hidden">Page </span>1<span class="visually-hidden">: Executive overview (screenshot)</span></a><a class="pg" href="#page-2" title="Page 2: All agents"><span class="visually-hidden">Page </span>2<span class="visually-hidden">: All agents</span></a><a class="pg" href="#page-3" title="Page 3: Agent analytics"><span class="visually-hidden">Page </span>3<span class="visually-hidden">: Agent analytics</span></a><a class="pg pg-shot" href="#page-4" title="Page 4: Agent inventory (screenshot)"><span class="visually-hidden">Page </span>4<span class="visually-hidden">: Agent inventory (screenshot)</span></a><a class="pg" href="#page-5" title="Page 5: Creators &amp; ownership"><span class="visually-hidden">Page </span>5<span class="visually-hidden">: Creators &amp; ownership</span></a><a class="pg" href="#page-6" title="Page 6: Usage &amp; popularity"><span class="visually-hidden">Page </span>6<span class="visually-hidden">: Usage &amp; popularity</span></a><a class="pg pg-shot" href="#page-7" title="Page 7: Copilot interactions (screenshot)"><span class="visually-hidden">Page </span>7<span class="visually-hidden">: Copilot interactions (screenshot)</span></a><a class="pg" href="#page-8" title="Page 8: SharePoint agents"><span class="visually-hidden">Page </span>8<span class="visually-hidden">: SharePoint agents</span></a><a class="pg" href="#page-9" title="Page 9: Adoption &amp; activity"><span class="visually-hidden">Page </span>9<span class="visually-hidden">: Adoption &amp; activity</span></a></span></td></tr>
+          <tr><th scope="row">CopilotSurface</th><td>C</td><td>Every distinct app identity in the audit log, classified by surface and matched to the inventory</td><td>The same table (app identities only), matched against Agent and SharePointAgent</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-7" title="Page 7: Copilot interactions (screenshot)"><span class="visually-hidden">Page </span>7<span class="visually-hidden">: Copilot interactions (screenshot)</span></a><a class="pg" href="#page-8" title="Page 8: SharePoint agents"><span class="visually-hidden">Page </span>8<span class="visually-hidden">: SharePoint agents</span></a></span></td></tr>
+          <tr><th scope="row">KnowledgeSource</th><td>D</td><td>One row per named source an agent reads: SharePoint site, public website, Graph connector or Azure AI Search index</td><td>A collector table in the reporting environment, swept daily from every environment (optional)</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-13" title="Page 13: Knowledge sources (screenshot)"><span class="visually-hidden">Page </span>13<span class="visually-hidden">: Knowledge sources (screenshot)</span></a></span></td></tr>
+          <tr><th scope="row">SharePointAgent</th><td>E</td><td><code>.agent</code> files: current or deleted, names, sites and URLs</td><td>A collector table in the reporting environment (optional)</td><td><span class="pg-list"><a class="pg" href="#page-8" title="Page 8: SharePoint agents"><span class="visually-hidden">Page </span>8<span class="visually-hidden">: SharePoint agents</span></a></span></td></tr>
+          <tr><th scope="row">ShadowAiSignal</th><td>F</td><td>Detections in three layers: installed, executed and network</td><td>Defender advanced hunting, through the Web connector</td><td><span class="pg-list"><a class="pg" href="#page-16" title="Page 16: Shadow AI (endpoints)"><span class="visually-hidden">Page </span>16<span class="visually-hidden">: Shadow AI (endpoints)</span></a></span></td></tr>
+          <tr><th scope="row">ShadowAiDevice</th><td>F</td><td>Device-level detail for each detection</td><td>Defender advanced hunting, through the Web connector</td><td><span class="pg-list"><a class="pg" href="#page-16" title="Page 16: Shadow AI (endpoints)"><span class="visually-hidden">Page </span>16<span class="visually-hidden">: Shadow AI (endpoints)</span></a></span></td></tr>
+          <tr><th scope="row">RiskFactor</th><td>Static</td><td>The risk rules and the points each one scores</td><td>Static table held in the model</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-10" title="Page 10: Governance &amp; risk (screenshot)"><span class="visually-hidden">Page </span>10<span class="visually-hidden">: Governance &amp; risk (screenshot)</span></a></span></td></tr>
+          <tr><th scope="row">ApiCoverage</th><td>Static</td><td>Results of the live-tested APIs</td><td>Static table held in the model</td><td><span class="pg-list"><a class="pg" href="#page-15" title="Page 15: Data sources &amp; gaps"><span class="visually-hidden">Page </span>15<span class="visually-hidden">: Data sources &amp; gaps</span></a></span></td></tr>
+          <tr><th scope="row">TelemetryCoverage</th><td>Static</td><td>Which monitoring signals each platform exposes, which explains gaps in usage figures</td><td>Static table held in the model</td><td><span class="pg-list"><a class="pg" href="#page-6" title="Page 6: Usage &amp; popularity"><span class="visually-hidden">Page </span>6<span class="visually-hidden">: Usage &amp; popularity</span></a><a class="pg" href="#page-15" title="Page 15: Data sources &amp; gaps"><span class="visually-hidden">Page </span>15<span class="visually-hidden">: Data sources &amp; gaps</span></a></span></td></tr>
+          <tr><th scope="row">ShadowAiCatalog</th><td>Static</td><td>The watchlist of AI tools to look for</td><td>Static table held in the model</td><td><span class="pg-list"><a class="pg" href="#page-16" title="Page 16: Shadow AI (endpoints)"><span class="visually-hidden">Page </span>16<span class="visually-hidden">: Shadow AI (endpoints)</span></a></span></td></tr>
+          <tr><th scope="row">Date</th><td>Model</td><td>A calendar from a start parameter to the end of next month</td><td>Generated in Power Query at refresh</td><td><span class="pg-list"><a class="pg pg-shot" href="#page-1" title="Page 1: Executive overview (screenshot)"><span class="visually-hidden">Page </span>1<span class="visually-hidden">: Executive overview (screenshot)</span></a><a class="pg" href="#page-3" title="Page 3: Agent analytics"><span class="visually-hidden">Page </span>3<span class="visually-hidden">: Agent analytics</span></a><a class="pg" href="#page-6" title="Page 6: Usage &amp; popularity"><span class="visually-hidden">Page </span>6<span class="visually-hidden">: Usage &amp; popularity</span></a><a class="pg pg-shot" href="#page-7" title="Page 7: Copilot interactions (screenshot)"><span class="visually-hidden">Page </span>7<span class="visually-hidden">: Copilot interactions (screenshot)</span></a><a class="pg" href="#page-9" title="Page 9: Adoption &amp; activity"><span class="visually-hidden">Page </span>9<span class="visually-hidden">: Adoption &amp; activity</span></a></span></td></tr>
+          <tr><th scope="row">Metrics</th><td>Model</td><td>The report's calculations; no data of its own</td><td>Defined in the model</td><td><a href="#lineage-pages">All 16</a></td></tr>
           </tbody>
         </table>
       </div>
-      <h3>The lanes behind each report page</h3>
+      <h3 id="lineage-pages">The lanes behind each report page</h3>
       <p>The report has 16 pages and 287 visuals. A dot means the page reads a table from that lane. A ring means it reaches the lane only through Agent columns or measures. A blank means the page doesn't use the lane.</p>
       <div class="table-wrap">
         <table class="wrap-head lin-matrix">
           <thead><tr><th scope="col">Page</th><th scope="col">Visuals</th><th scope="col"><span class="visually-hidden">Lane </span>A <span class="lin-sub">Inventory</span></th><th scope="col"><span class="visually-hidden">Lane </span>B <span class="lin-sub">Identity</span></th><th scope="col"><span class="visually-hidden">Lane </span>C <span class="lin-sub">Interactions</span></th><th scope="col"><span class="visually-hidden">Lane </span>D <span class="lin-sub">Knowledge</span></th><th scope="col"><span class="visually-hidden">Lane </span>E <span class="lin-sub">SharePoint</span></th><th scope="col"><span class="visually-hidden">Lane </span>F <span class="lin-sub">Shadow AI</span></th><th scope="col"><span class="visually-hidden">Lane </span>Static <span class="lin-sub">Reference</span></th><th scope="col">Screenshot</th></tr></thead>
           <tbody>
-          <tr><th scope="row">1. Executive overview</th><td>23</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td><a href="assets/01-executive-overview.png">View<span class="visually-hidden"> the Executive overview screenshot</span></a></td></tr>
-          <tr><th scope="row">2. All agents</th><td>17</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr><th scope="row">3. Agent analytics</th><td>16</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr><th scope="row">4. Agent inventory</th><td>17</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td><a href="assets/02-agent-inventory.png">View<span class="visually-hidden"> the Agent inventory screenshot</span></a></td></tr>
-          <tr><th scope="row">5. Creators &amp; ownership</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr><th scope="row">6. Usage &amp; popularity</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
-          <tr><th scope="row">7. Copilot interactions</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td><a href="assets/03-copilot-interactions.png">View<span class="visually-hidden"> the Copilot interactions screenshot</span></a></td></tr>
-          <tr><th scope="row">8. SharePoint agents</th><td>19</td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td></tr>
-          <tr><th scope="row">9. Adoption &amp; activity</th><td>20</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr><th scope="row">10. Governance &amp; risk</th><td>20</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td><a href="assets/04-governance-risk.png">View<span class="visually-hidden"> the Governance & risk screenshot</span></a></td></tr>
-          <tr><th scope="row">11. Tools &amp; integration</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr><th scope="row">12. Knowledge &amp; grounding</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-          <tr><th scope="row">13. Knowledge sources</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td><a href="assets/05-knowledge-sources.png">View<span class="visually-hidden"> the Knowledge sources screenshot</span></a></td></tr>
-          <tr><th scope="row">14. Azure AI Foundry</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td><a href="assets/06-azure-ai-foundry.png">View<span class="visually-hidden"> the Azure AI Foundry screenshot</span></a></td></tr>
-          <tr><th scope="row">15. Data sources &amp; gaps</th><td>12</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
-          <tr><th scope="row">16. Shadow AI (endpoints)</th><td>14</td><td></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
+          <tr id="page-1"><th scope="row"><span class="visually-hidden">Page </span><span class="pg pg-shot">1</span><span class="visually-hidden">:</span> Executive overview</th><td>23</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td><a class="shot-open" href="assets/01-executive-overview.png" data-shot="shot-page-1">View<span class="visually-hidden"> the Executive overview screenshot</span></a></td></tr>
+          <tr id="page-2"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">2</span><span class="visually-hidden">:</span> All agents</th><td>17</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr id="page-3"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">3</span><span class="visually-hidden">:</span> Agent analytics</th><td>16</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr id="page-4"><th scope="row"><span class="visually-hidden">Page </span><span class="pg pg-shot">4</span><span class="visually-hidden">:</span> Agent inventory</th><td>17</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td><a class="shot-open" href="assets/02-agent-inventory.png" data-shot="shot-page-4">View<span class="visually-hidden"> the Agent inventory screenshot</span></a></td></tr>
+          <tr id="page-5"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">5</span><span class="visually-hidden">:</span> Creators &amp; ownership</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr id="page-6"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">6</span><span class="visually-hidden">:</span> Usage &amp; popularity</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
+          <tr id="page-7"><th scope="row"><span class="visually-hidden">Page </span><span class="pg pg-shot">7</span><span class="visually-hidden">:</span> Copilot interactions</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td><a class="shot-open" href="assets/03-copilot-interactions.png" data-shot="shot-page-7">View<span class="visually-hidden"> the Copilot interactions screenshot</span></a></td></tr>
+          <tr id="page-8"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">8</span><span class="visually-hidden">:</span> SharePoint agents</th><td>19</td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td></tr>
+          <tr id="page-9"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">9</span><span class="visually-hidden">:</span> Adoption &amp; activity</th><td>20</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr id="page-10"><th scope="row"><span class="visually-hidden">Page </span><span class="pg pg-shot">10</span><span class="visually-hidden">:</span> Governance &amp; risk</th><td>20</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td><a class="shot-open" href="assets/04-governance-risk.png" data-shot="shot-page-10">View<span class="visually-hidden"> the Governance &amp; risk screenshot</span></a></td></tr>
+          <tr id="page-11"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">11</span><span class="visually-hidden">:</span> Tools &amp; integration</th><td>18</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr id="page-12"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">12</span><span class="visually-hidden">:</span> Knowledge &amp; grounding</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr id="page-13"><th scope="row"><span class="visually-hidden">Page </span><span class="pg pg-shot">13</span><span class="visually-hidden">:</span> Knowledge sources</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td><a class="shot-open" href="assets/05-knowledge-sources.png" data-shot="shot-page-13">View<span class="visually-hidden"> the Knowledge sources screenshot</span></a></td></tr>
+          <tr id="page-14"><th scope="row"><span class="visually-hidden">Page </span><span class="pg pg-shot">14</span><span class="visually-hidden">:</span> Azure AI Foundry</th><td>19</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark lin-via"><span aria-hidden="true">○</span><span class="visually-hidden">Through Agent columns or measures</span></td><td></td><td></td><td></td><td></td><td></td><td><a class="shot-open" href="assets/06-azure-ai-foundry.png" data-shot="shot-page-14">View<span class="visually-hidden"> the Azure AI Foundry screenshot</span></a></td></tr>
+          <tr id="page-15"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">15</span><span class="visually-hidden">:</span> Data sources &amp; gaps</th><td>12</td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
+          <tr id="page-16"><th scope="row"><span class="visually-hidden">Page </span><span class="pg">16</span><span class="visually-hidden">:</span> Shadow AI (endpoints)</th><td>14</td><td></td><td></td><td></td><td></td><td></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td class="lin-mark"><span aria-hidden="true">●</span><span class="visually-hidden">Direct</span></td><td></td></tr>
           </tbody>
         </table>
       </div>
@@ -1302,8 +1332,8 @@ in
       <h2 id="related-h">Related resources</h2>
       <div class="grid-2">
         <div class="card">
-          <h3><a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a></h3>
-          <p>The lane C collector and the capture method behind the model's Usage tables, documented on its own as a <a href="https://ryanbowie.github.io/copilot-interaction-logging/">build guide</a> with no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables.</p>
+          <h3><a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a></h3>
+          <p>The lane C collector and the capture method behind the model's Usage tables, documented on its own site with a step-by-step <a href="https://ryanbowie.github.io/copilot-interaction-logging/#build">build guide</a> and no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables. The source is in its <a href="https://github.com/RyanBowie/copilot-interaction-logging">repository</a>.</p>
         </div>
         <div class="card">
           <h3><a href="https://learn.microsoft.com/microsoft-agent-365/overview">Microsoft Agent 365</a></h3>
@@ -1345,7 +1375,7 @@ in
     <aside class="dl-series" aria-label="Two-part series">
       <p class="dl-series-k">A two-part series</p>
       <ol>
-        <li><a class="dl-card" href="#top" aria-current="page"><span class="dl-no" aria-hidden="true">01</span><strong>Custom Agent Reporting – Architecture</strong><span class="dl-desc">How a custom Power BI model can report on agents across Copilot Studio, Agent Builder and Microsoft Foundry. Documentation only, and not a replacement for Microsoft Agent 365.</span><span class="dl-here">You are here</span></a></li>
+        <li><a class="dl-card" href="#top" aria-current="page"><span class="dl-no" aria-hidden="true">01</span><strong>Custom Agent Reporting – Architecture</strong><span class="dl-desc">How a custom Power BI model can report on agents across Copilot Studio, Agent Builder and Microsoft Foundry. An architecture showcase, and not a replacement for Microsoft Agent 365.</span><span class="dl-here">You are here</span></a></li>
         <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-interaction-logging/"><span class="dl-no" aria-hidden="true">02</span><strong>Copilot Interaction Logging</strong><span class="dl-desc">The build guide behind lane C: Copilot interaction records from the Purview audit log, collected into Dataverse by two Power Automate flows.</span><span class="dl-go">Open part 02 →</span></a></li>
       </ol>
     </aside>
@@ -1359,6 +1389,7 @@ in
         <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-powerbi-agent/"><span class="dl-no" aria-hidden="true">05</span><strong>Power BI Agent</strong><span class="dl-desc">A standard Copilot Studio agent that writes DAX and queries Power BI semantic models as the signed-in user. No Fabric data agent needed.</span><span class="dl-go">Visit site &rarr;</span></a></li>
         <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-documentation-builder/"><span class="dl-no" aria-hidden="true">06</span><strong>Documentation Builder</strong><span class="dl-desc">Template-aligned technical documents from Copilot Studio, comparing the standard and GitHub Copilot harnesses with observed results.</span><span class="dl-go">Visit site &rarr;</span></a></li>
         <li><a class="dl-card" href="https://ryanbowie.github.io/ai-video-creation-guide/"><span class="dl-no" aria-hidden="true">07</span><strong>AI Video Creation Guide</strong><span class="dl-desc">Make code-drawn animated videos from one prompt with Claude Opus 5.5 in the GitHub Copilot app, with prompts, skills and examples.</span><span class="dl-go">Visit site &rarr;</span></a></li>
+        <li><a class="dl-card" href="https://github.com/RyanBowie/copilot-autoharness"><span class="dl-no" aria-hidden="true">08</span><strong>Copilot Autoharness</strong><span class="dl-desc">A self-learning skill layer for the GitHub Copilot app, ported from autoharness. It learns reusable skills from your sessions and prunes stale ones.</span><span class="dl-go">View repository &rarr;</span></a></li>
       </ol>
     </aside>
     <!-- dl-others:end -->
@@ -1369,7 +1400,7 @@ in
 
 <footer class="site-footer">
   <div class="inner">
-    <p>Custom Agent Reporting – Architecture · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture">Repository</a> · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture/blob/main/LICENSE">MIT licence</a> · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture#readme">README</a> · <a href="https://github.com/RyanBowie/copilot-interaction-logging">Copilot Interaction Logging</a></p>
+    <p>Custom Agent Reporting – Architecture · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture">Repository</a> · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture/blob/main/LICENSE">MIT licence</a> · <a href="https://github.com/RyanBowie/custom-agent-reporting-architecture#readme">README</a> · <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a></p>
     <p>Provided <strong>as is</strong>, without warranty of any kind. You are responsible for assessing whether it is appropriate for your organisation, and for building, operating and securing any implementation.</p>
     <p>Microsoft, Microsoft 365, Microsoft 365 Copilot, Microsoft Agent 365, Copilot, Copilot Studio, Power Platform, Power Automate, Power BI, Dataverse, Azure, Azure Resource Graph, Microsoft Foundry, Entra, Purview and Defender are trademarks of the Microsoft group of companies. This project is not affiliated with or endorsed by Microsoft.</p>
   </div>
@@ -1530,13 +1561,22 @@ in
   if (lb && typeof lb.showModal === "function") {
     const lbImg = $("img", lb), lbCap = $("#lightbox-caption", lb);
     let lbTrigger = null;
-    $$(".shot-btn").forEach((a) => a.addEventListener("click", (e) => {
-      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      e.preventDefault();
-      const img = $("img", a), fig = a.closest("figure"), cap = fig ? $("figcaption", fig) : null;
-      lbImg.src = a.getAttribute("href"); lbImg.alt = img ? img.alt : "";
+    const openShot = (trigger, fig) => {
+      const img = fig ? $("img", fig) : null, cap = fig ? $("figcaption", fig) : null;
+      lbImg.src = trigger.getAttribute("href"); lbImg.alt = img ? img.alt : "";
       lbCap.textContent = cap ? cap.textContent.replace(/\s+/g, " ").trim() : "";
-      lbTrigger = a; lb.showModal(); announce("Screenshot opened. Press Escape to close.");
+      lbTrigger = trigger; lb.showModal(); announce("Screenshot opened. Press Escape to close.");
+    };
+    const plainClick = (e) => e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+    $$(".shot-btn").forEach((a) => a.addEventListener("click", (e) => {
+      if (!plainClick(e)) return;
+      e.preventDefault(); openShot(a, a.closest("figure"));
+    }));
+    /* The lineage table's View links open the matching gallery screenshot */
+    $$(".shot-open").forEach((a) => a.addEventListener("click", (e) => {
+      const fig = document.getElementById(a.dataset.shot);
+      if (!fig || !plainClick(e)) return;
+      e.preventDefault(); openShot(a, fig);
     }));
     $(".lightbox-close", lb).addEventListener("click", () => lb.close());
     lb.addEventListener("click", (e) => { if (e.target === lb || e.target.classList.contains("lightbox-inner")) lb.close(); });
@@ -1593,11 +1633,15 @@ in
   if (!motion) return;
   root.classList.add("dl-motion");
 
-  // Sections below the fold fade up once as they arrive.
+  // Sections below the fold fade up once as they arrive. A section holding a
+  // link target shows at once instead: while it is still rising, a jump into it
+  // would land 16px out, under the sticky header.
   const fold = window.innerHeight;
+  const idOf = (hash) => { try { return decodeURIComponent(hash.slice(1)); } catch (err) { return ""; } };
+  const hashed = location.hash ? document.getElementById(idOf(location.hash)) : null;
   const targets = Array.prototype.filter.call(
     document.querySelectorAll("main > section:not(.hero), main > .dl-series, main > .dl-others"),
-    (el) => el.getBoundingClientRect().top > fold
+    (el) => el.getBoundingClientRect().top > fold && !(hashed && el.contains(hashed))
   );
   const io = new IntersectionObserver((entries) => {
     entries.forEach((e) => {
@@ -1607,6 +1651,23 @@ in
     });
   }, { rootMargin: "0px 0px -6% 0px" });
   targets.forEach((el) => { el.classList.add("dl-reveal"); io.observe(el); });
+  const settle = (id) => {
+    const el = id ? document.getElementById(id) : null;
+    const sec = el ? el.closest(".dl-reveal:not(.dl-in)") : null;
+    if (!sec) return null;
+    sec.classList.add("dl-now", "dl-in");
+    io.unobserve(sec);
+    return el;
+  };
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (a) settle(idOf(a.getAttribute("href")));
+  });
+  // Back, forward or an edited address scroll before this fires, so re-aim.
+  window.addEventListener("hashchange", () => {
+    const el = settle(idOf(location.hash));
+    if (el) el.scrollIntoView({ block: "start" });
+  });
 
   // Hero numbers count up once, only when the facts are already on screen.
   const facts = document.querySelector(".hero .facts");
