@@ -511,6 +511,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
     <li><a href="#shadow-ai">Shadow AI</a></li>
     <li><a href="#permissions">Permissions</a></li>
     <li><a href="#limitations">Limits</a></li>
+    <li><a href="#origins">Origins</a></li>
     <li><a href="#related">Related</a></li>
   </ul>
 </nav>
@@ -535,6 +536,7 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
       <li><a href="#shadow-ai">Shadow AI on endpoints</a></li>
       <li><a href="#permissions">Permissions</a></li>
       <li><a href="#limitations">Limitations and upkeep</a></li>
+      <li><a href="#origins">Origins</a></li>
       <li><a href="#related">Related resources</a></li>
     </ol>
   </nav>
@@ -779,6 +781,11 @@ html.dl-motion .dl-reveal.dl-in { opacity: 1; transform: none; }
           </svg>
         </div>
       </figure>
+      <div class="callout callout-accent" role="note" id="other-routes">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>One route among many</p>
+        <p>This is a custom build. It shows that the data can be collected, and it's only one of several ways to get agent data. There may be more effective ways to get some of it, and new or changed APIs may replace a lane over time, especially where a lane relies on preview or beta endpoints.</p>
+        <p>If you have Microsoft Agent 365, data from its APIs, such as the <a href="https://learn.microsoft.com/microsoft-agent-365/admin/graph-api">Graph API for agent registry and agent details</a>, would complement this design, for example as the inventory source alongside or in place of lane A. Whichever sources you combine, the solution stays custom: you own and maintain it. See <a href="#not-a-replacement">Not a replacement for Microsoft Agent 365</a>.</p>
+      </div>
     </section>
 
     <section class="section" id="lanes" aria-labelledby="lanes-h">
@@ -1280,6 +1287,16 @@ in
       </ul>
     </section>
 
+    <section class="section" id="origins" aria-labelledby="origins-h">
+      <p class="section-kicker">How it was built</p>
+      <h2 id="origins-h">Origins</h2>
+      <div class="callout callout-info" role="note" id="built-with-copilot">
+        <p class="callout-title"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg>Built with GitHub Copilot</p>
+        <p>GitHub Copilot was used to produce the solutions that extract the data for this model. That includes the <a href="https://ryanbowie.github.io/copilot-interaction-logging/">Copilot Interaction Logging</a> flows behind lane C, which pull <code>CopilotInteraction</code> records from the Purview audit log into Dataverse. After a manual first build, later versions of those flows were made with GitHub Copilot, using the skills in the <a href="https://github.com/microsoft/power-platform-skills/blob/main/plugins/power-automate/README.md">Power Automate plugin</a> from <a href="https://github.com/microsoft/power-platform-skills">microsoft/power-platform-skills</a>.</p>
+        <p>Treat the design as a demonstration of what a custom build can do, and review every query, flow and permission before you rely on it. Lane C began as an adaptation of the audit log flows in the <a href="https://github.com/microsoft/coe-starter-kit">CoE Starter Kit</a>; see <a href="https://ryanbowie.github.io/copilot-interaction-logging/#origins">Origins and credit</a> in its build guide.</p>
+      </div>
+    </section>
+
     <section class="section" id="related" aria-labelledby="related-h">
       <p class="section-kicker">See also</p>
       <h2 id="related-h">Related resources</h2>
@@ -1341,6 +1358,7 @@ in
         <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-sharepoint-search-hub/"><span class="dl-no" aria-hidden="true">04</span><strong>SharePoint Search Hub</strong><span class="dl-desc">Hub-and-spoke SharePoint search for Copilot Studio, with results checked against the caller's access and a private Excel export.</span><span class="dl-go">Visit site &rarr;</span></a></li>
         <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-powerbi-agent/"><span class="dl-no" aria-hidden="true">05</span><strong>Power BI Agent</strong><span class="dl-desc">A standard Copilot Studio agent that writes DAX and queries Power BI semantic models as the signed-in user. No Fabric data agent needed.</span><span class="dl-go">Visit site &rarr;</span></a></li>
         <li><a class="dl-card" href="https://ryanbowie.github.io/copilot-studio-documentation-builder/"><span class="dl-no" aria-hidden="true">06</span><strong>Documentation Builder</strong><span class="dl-desc">Template-aligned technical documents from Copilot Studio, comparing the standard and GitHub Copilot harnesses with observed results.</span><span class="dl-go">Visit site &rarr;</span></a></li>
+        <li><a class="dl-card" href="https://ryanbowie.github.io/ai-video-creation-guide/"><span class="dl-no" aria-hidden="true">07</span><strong>AI Video Creation Guide</strong><span class="dl-desc">Make code-drawn animated videos from one prompt with Claude Opus 5.5 in the GitHub Copilot app, with prompts, skills and examples.</span><span class="dl-go">Visit site &rarr;</span></a></li>
       </ol>
     </aside>
     <!-- dl-others:end -->

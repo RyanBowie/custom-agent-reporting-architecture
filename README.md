@@ -19,7 +19,7 @@ A community reference architecture for **tenant-wide reporting on AI agents** ac
 
 | Path | Contents |
 |---|---|
-| `docs/index.html` | The guide, published with GitHub Pages: architecture, data lanes, collectors, gateway-free refresh, semantic model, origin and risk scoring, coverage, findings, Shadow AI, permissions and limitations |
+| `docs/index.html` | The guide, published with GitHub Pages: architecture, data lanes, collectors, gateway-free refresh, semantic model, origin and risk scoring, coverage, findings, Shadow AI, permissions, limitations and how it was built |
 | `docs/assets/` | Six screenshots of the working report, and the social card used by the guide |
 | `SECURITY.md` | How to report a security problem, and the security model in brief |
 
@@ -84,6 +84,11 @@ flowchart TB
 - **No gateway.** Scheduled refresh runs entirely in the Power BI service, using three connectors.
 - **Data first.** The report pages were designed around what the APIs actually return, and the guide records what was learned along the way.
 
+> [!TIP]
+> **One route among many.** This is a custom build. It shows that the data can be collected, and it's only one of several ways to get agent data. There may be more effective ways to get some of it, and new or changed APIs may replace a lane over time, especially where a lane relies on preview or beta endpoints.
+>
+> If you have Microsoft Agent 365, data from its APIs, such as the [Graph API for agent registry and agent details](https://learn.microsoft.com/microsoft-agent-365/admin/graph-api), would complement this design, for example as the inventory source alongside or in place of lane A. Whichever sources you combine, the solution stays custom: you own and maintain it, as the note at the top of this page explains.
+
 ## Which table feeds which page
 
 The model has 21 tables and 13 relationships, with Agent at the hub. "Direct" lanes are read by the page's own visuals; "through Agent" lanes arrive through Agent's calculated columns or measures (creator names from lane B, last activity from lane C). Reference tables are static and held in the model. The [full lineage](https://ryanbowie.github.io/custom-agent-reporting-architecture/#lineage) lists every table and where it comes from.
@@ -107,9 +112,16 @@ The model has 21 tables and 13 relationships, with Agent at the hub. "Direct" la
 | 15. Data sources & gaps | 12 | A, Reference | – |
 | 16. Shadow AI (endpoints) | 14 | F, Reference | – |
 
+## Origins
+
+**Built with GitHub Copilot.** GitHub Copilot was used to produce the solutions that extract the data for this model. That includes the [Copilot Interaction Logging](https://ryanbowie.github.io/copilot-interaction-logging/) flows behind lane C, which pull `CopilotInteraction` records from the Purview audit log into Dataverse. After a manual first build, later versions of those flows were made with GitHub Copilot, using the skills in the [Power Automate plugin](https://github.com/microsoft/power-platform-skills/blob/main/plugins/power-automate/README.md) from [microsoft/power-platform-skills](https://github.com/microsoft/power-platform-skills).
+
+Treat the design as a demonstration of what a custom build can do, and review every query, flow and permission before you rely on it. Lane C began as an adaptation of the audit log flows in the [CoE Starter Kit](https://github.com/microsoft/coe-starter-kit); see [Origins and credit](https://ryanbowie.github.io/copilot-interaction-logging/#origins) in its build guide.
+
 ## Related
 
 - [Copilot Interaction Logging](https://github.com/RyanBowie/copilot-interaction-logging) ([guide](https://ryanbowie.github.io/copilot-interaction-logging/)): the lane C collector and the capture method behind the model's Usage tables, documented separately as a build guide with no package to install. It covers every action in both flows and why it exists, the secret-handling decision and the environment variables.
+- More community projects: [Power Platform Solution Reviewer](https://ryanbowie.github.io/copilot-studio-powerplatform-solution-reviewer-site/), [SharePoint Search Hub](https://ryanbowie.github.io/copilot-studio-sharepoint-search-hub/), [Power BI Agent](https://ryanbowie.github.io/copilot-studio-powerbi-agent/), [Documentation Builder](https://ryanbowie.github.io/copilot-studio-documentation-builder/) and [AI Video Creation Guide](https://ryanbowie.github.io/ai-video-creation-guide/).
 - [Microsoft Agent 365 overview](https://learn.microsoft.com/microsoft-agent-365/overview).
 
 ## Licence and disclaimer
